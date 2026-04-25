@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdvFlow Pro - Sistema Jurídico Inteligente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0f1c 0%, #0a1628 50%, #0d1b2a 100%);
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #e2e8f0;
+        }
+        
+        /* Glassmorphism refinado */
+        .glass-card {
+            background: rgba(15, 30, 50, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .glass-card:hover {
+            background: rgba(20, 40, 65, 0.7);
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Kanban refinado */
+        .kanban-column {
+            background: rgba(8, 18, 30, 0.5);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            min-height: 550px;
+            transition: all 0.3s;
+        }
+        
+        .process-card {
+            background: linear-gradient(135deg, rgba(25, 45, 65, 0.9) 0%, rgba(18, 35, 55, 0.9) 100%);
+            border-left: 3px solid #3b82f6;
+            border-radius: 10px;
+            cursor: grab;
+            transition: all 0.25s ease;
+        }
+        
+        .process-card:active {
+            cursor: grabbing;
+        }
+        
+        .process-card:hover {
+            transform: translateX(4px);
+            border-left-width: 4px;
+            background: linear-gradient(135deg, rgba(30, 55, 80, 0.95) 0%, rgba(22, 45, 70, 0.95) 100%);
+        }
+        
+        /* Badges animadas */
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        
+        .badge-urgent {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            animation: pulse-red 1.5s infinite;
+        }
+        
+        /* Scrollbar customizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #0a1628;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 10px;
+        }
+        
+        /* Inputs modernos */
+        .input-modern {
+            background: rgba(10, 20, 35, 0.8);
+            border: 1px solid #2d4a6e;
+            border-radius: 10px;
+            padding: 8px 12px;
+            color: #e2e8f0;
+            transition: all 0.3s;
+        }
+        
+        .input-modern:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            background: rgba(15, 30, 50, 0.9);
+        }
+        
+        /* Modais */
+        .modal-glass {
+            background: linear-gradient(135deg, rgba(15, 30, 55, 0.98) 0%, rgba(10, 22, 45, 0.98) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 20px;
+        }
+        
+        /* Botões animados */
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4);
+        }
+        
+        /* Tabela responsiva */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th {
+            background: rgba(30, 50, 70, 0.6);
+            padding: 12px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+        
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+        }
+        
+        .data-table tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Calendário */
+        .calendar-day {
+            background: rgba(15, 30, 50, 0.5);
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .calendar-day:hover {
+            background: rgba(59, 130, 246, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .calendar-day.has-event {
+            background: rgba(59, 130, 246, 0.4);
+            border-left: 3px solid #3b82f6;
+        }
+        
+        /* Tooltips */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+        
+        [data-tooltip]:before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            display: none;
+            z-index: 1000;
+        }
+        
+        [data-tooltip]:hover:before {
+            display: block;
+        }
+        
+        /* Animações */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-gradient-to-r from-[#0a0f1c] to-[#0d1b2a] border-b border-blue-900/30 shadow-xl">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-wrap justify-between items-center gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-2.5 shadow-lg">
+                        <i class="fas fa-scale-balanced text-2xl text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">AdvFlow Pro</h1>
+                        <p class="text-xs text-gray-400">Sistema Jurídico Inteligente - Definitivo</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3 flex-wrap gap-2">
+                    <div class="hidden md:flex items-center space-x-2 bg-blue-900/30 rounded-lg px-3 py-1.5">
+                        <i class="fas fa-calendar-alt text-blue-400"></i>
+                        <span class="text-sm" id="dataAtual"></span>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-2 bg-blue-900/30 rounded-lg px-3 py-1.5">
+                        <i class="fas fa-clock text-blue-400"></i>
+                        <span class="text-sm" id="horaAtual"></span>
+                    </div>
+                    <div class="relative">
+                        <button onclick="toggleNotificacoes()" class="bg-blue-900/30 rounded-lg px-3 py-1.5 relative">
+                            <i class="fas fa-bell text-blue-400"></i>
+                            <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center hidden">0</span>
+                        </button>
+                        <div id="notificacoesPanel" class="hidden absolute right-0 mt-2 w-80 glass-card rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
+                            <div class="p-3 border-b border-blue-800/50 font-bold">Notificações</div>
+                            <div id="listaNotificacoesPanel" class="divide-y divide-blue-800/30"></div>
+                        </div>
+                    </div>
+                    <button onclick="abrirPainelBI()" class="btn-primary px-4 py-1.5 rounded-lg transition flex items-center gap-2">
+                        <i class="fas fa-chart-line"></i>
+                        <span class="hidden md:inline">Business Intelligence</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-6">
+        <!-- Barra de Ações Rápidas -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6 fade-in">
+            <button onclick="abrirModalProcesso()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group">
+                <i class="fas fa-folder-open text-2xl text-blue-400 group-hover:scale-110 transition"></i>
+                <p class="text-xs mt-1 font-semibold">Novo Processo</p>
+            </button>
+            <button onclick="abrirModalAudiencia()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group">
+                <i class="fas fa-gavel text-2xl text-purple-400 group-hover:scale-110 transition"></i>
+                <p class="text-xs mt-1 font-semibold">Audiência</p>
+            </button>
+            <button onclick="abrirModalPeticao()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group">
+                <i class="fas fa-file-alt text-2xl text-green-400 group-hover:scale-110 transition"></i>
+                <p class="text-xs mt-1 font-semibold">Petição</p>
+            </button>
+            <button onclick="abrirModalHonorarios()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group">
+                <i class="fas fa-coins text-2xl text-yellow-400 group-hover:scale-110 transition"></i>
+                <p class="text-xs mt-1 font-semibold">Financeiro</p>
+            </button>
+            <button onclick="abrirModalRelatorios()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group">
+                <i class="fas fa-chart-pie text-2xl text-red-400 group-hover:scale-110 transition"></i>
+                <p class="text-xs mt-1 font-semibold">Relatórios</p>
+            </button>
+            <button onclick="abrirModalDocumentos()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group">
+                <i class="fas fa-folder text-2xl text-indigo-400 group-hover:scale-110 transition"></i>
+                <p class="text-xs mt-1 font-semibold">Documentos</p>
+            </button>
+            <button onclick="abrirModelos()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group">
+                <i class="fas fa-file-alt text-2xl text-cyan-400 group-hover:scale-110 transition"></i>
+                <p class="text-xs mt-1 font-semibold">Modelos</p>
+            </button>
+            <button onclick="abrirConfiguracoes()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group">
+                <i class="fas fa-sliders-h text-2xl text-gray-400 group-hover:scale-110 transition"></i>
+                <p class="text-xs mt-1 font-semibold">Config</p>
+            </button>
+        </div>
+
+        <!-- Métricas Expandidas (8 cards) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4 mb-8 fade-in">
+            <div class="glass-card rounded-xl p-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs">Total Processos</p>
+                        <p class="text-2xl font-bold text-blue-400" id="totalProcessos">0</p>
+                    </div>
+                    <i class="fas fa-balance-scale text-2xl text-blue-500/50"></i>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">Ativos: <span id="processosAtivos">0</span></div>
+            </div>
+            
+            <div class="glass-card rounded-xl p-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs">Prazos Fatais</p>
+                        <p class="text-2xl font-bold text-red-400" id="prazosFatais">0</p>
+                    </div>
+                    <i class="fas fa-hourglass-end text-2xl text-red-500/50"></i>
+                </div>
+                <div class="text-xs text-red-300 mt-1" id="proximoPrazoFatal">-</div>
+            </div>
+            
+            <div class="glass-card rounded-xl p-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs">Audiências Hoje</p>
+                        <p class="text-2xl font-bold text-purple-400" id="audienciasHoje">0</p>
+                    </div>
+                    <i class="fas fa-calendar-check text-2xl text-purple-500/50"></i>
+                </div>
+                <div class="text-xs text-purple-300 mt-1" id="proximaAudiencia">-</div>
+            </div>
+            
+            <div class="glass-card rounded-xl p-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs">Honorários (Mês)</p>
+                        <p class="text-2xl font-bold text-green-400" id="honorariosMes">R$ 0</p>
+                    </div>
+                    <i class="fas fa-dollar-sign text-2xl text-green-500/50"></i>
+                </div>
+                <div class="text-xs text-green-300 mt-1" id="metaHonorarios">Meta: R$ 20.000</div>
+            </div>
+            
+            <div class="glass-card rounded-xl p-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs">Taxa Êxito</p>
+                        <p class="text-2xl font-bold text-yellow-400" id="taxaExito">0%</p>
+                    </div>
+                    <i class="fas fa-trophy text-2xl text-yellow-500/50"></i>
+                </div>
+                <div class="text-xs text-yellow-300 mt-1"><span id="processosGanhos">0</span> ganhos</div>
+            </div>
+            
+            <div class="glass-card rounded-xl p-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs">Valor em Causa</p>
+                        <p class="text-2xl font-bold text-orange-400" id="valorCausaTotal">R$ 0</p>
+                    </div>
+                    <i class="fas fa-chart-line text-2xl text-orange-500/50"></i>
+                </div>
+                <div class="text-xs text-orange-300 mt-1">Médio: <span id="valorMedio">R$ 0</span></div>
+            </div>
+            
+            <div class="glass-card rounded-xl p-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs">Tarefas Pendentes</p>
+                        <p class="text-2xl font-bold text-cyan-400" id="tarefasPendentes">0</p>
+                    </div>
+                    <i class="fas fa-tasks text-2xl text-cyan-500/50"></i>
+                </div>
+                <div class="text-xs text-cyan-300 mt-1">Hoje: <span id="tarefasHoje">0</span></div>
+            </div>
+            
+            <div class="glass-card rounded-xl p-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs">Documentos</p>
+                        <p class="text-2xl font-bold text-pink-400" id="totalDocumentos">0</p>
+                    </div>
+                    <i class="fas fa-file-pdf text-2xl text-pink-500/50"></i>
+                </div>
+                <div class="text-xs text-pink-300 mt-1">Modelos: <span id="totalModelos">0</span></div>
+            </div>
+        </div>
+
+        <!-- Painel Principal: Kanban + Calendário -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Kanban (3 colunas) -->
+            <div class="lg:col-span-3 fade-in">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <i class="fas fa-columns text-blue-400"></i> Pipeline de Processos
+                    </h2>
+                    <div class="flex gap-2">
+                        <button onclick="filtrarKanban('todos')" class="text-xs bg-blue-600/30 hover:bg-blue-600/50 px-2 py-1 rounded transition">Todos</button>
+                        <button onclick="filtrarKanban('urgente')" class="text-xs bg-red-600/30 hover:bg-red-600/50 px-2 py-1 rounded transition">Urgentes</button>
+                        <button onclick="exportarExcel()" class="text-xs bg-green-600/30 hover:bg-green-600/50 px-2 py-1 rounded transition">
+                            <i class="fas fa-file-excel mr-1"></i>Exportar
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="kanban-column p-3">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold"><i class="fas fa-hourglass-half mr-2 text-yellow-400"></i>Aguardando</h3>
+                            <span class="text-xs bg-yellow-500/20 px-2 py-1 rounded-full" id="countAguardando">0</span>
+                        </div>
+                        <div id="kanban-aguardando" class="space-y-3 min-h-[400px]"></div>
+                    </div>
+                    <div class="kanban-column p-3">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold"><i class="fas fa-spinner mr-2 text-blue-400"></i>Em Andamento</h3>
+                            <span class="text-xs bg-blue-500/20 px-2 py-1 rounded-full" id="countAndamento">0</span>
+                        </div>
+                        <div id="kanban-andamento" class="space-y-3 min-h-[400px]"></div>
+                    </div>
+                    <div class="kanban-column p-3">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold"><i class="fas fa-check-circle mr-2 text-green-400"></i>Concluídos</h3>
+                            <span class="text-xs bg-green-500/20 px-2 py-1 rounded-full" id="countConcluidos">0</span>
+                        </div>
+                        <div id="kanban-concluidos" class="space-y-3 min-h-[400px]"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Calendário e Tarefas -->
+            <div class="space-y-4 fade-in">
+                <!-- Mini Calendário -->
+                <div class="glass-card rounded-xl p-4">
+                    <h3 class="font-bold mb-3 flex items-center gap-2">
+                        <i class="fas fa-calendar-alt text-blue-400"></i> Calendário
+                        <i class="fas fa-question-circle text-gray-500 text-xs cursor-help ml-auto" data-tooltip="Clique em uma data para ver eventos"></i>
+                    </h3>
+                    <div id="miniCalendario" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
+                </div>
+                
+                <!-- Próximas Audiências -->
+                <div class="glass-card rounded-xl p-4">
+                    <h3 class="font-bold mb-3"><i class="fas fa-gavel text-purple-400 mr-2"></i>Próximas Audiências</h3>
+                    <div id="listaAudiencias" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                </div>
+                
+                <!-- Tarefas do Dia -->
+                <div class="glass-card rounded-xl p-4">
+                    <h3 class="font-bold mb-3 flex justify-between">
+                        <span><i class="fas fa-tasks text-cyan-400 mr-2"></i>Tarefas do Dia</span>
+                        <button onclick="abrirModalTarefa()" class="text-xs bg-blue-600/30 hover:bg-blue-600/50 px-2 py-1 rounded">
+                            <i class="fas fa-plus"></i> Nova
+                        </button>
+                    </h3>
+                    <div id="listaTarefas" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela Completa de Processos com Filtros Avançados -->
+        <div class="glass-card rounded-xl overflow-hidden fade-in">
+            <div class="p-4 border-b border-blue-900/50">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <i class="fas fa-database text-blue-400"></i> Banco de Processos
+                    </h2>
+                    <div class="flex flex-wrap gap-2">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm"></i>
+                            <input type="text" id="buscaProcessos" placeholder="Buscar..." 
+                                   class="pl-9 pr-3 py-1.5 bg-blue-900/30 rounded-lg text-sm border border-blue-800/50 focus:border-blue-500">
+                        </div>
+                        <select id="filtroStatus" class="bg-blue-900/30 rounded-lg text-sm px-3 py-1.5 border border-blue-800/50">
+                            <option value="todos">Todos status</option>
+                            <option value="aguardando">Aguardando</option>
+                            <option value="andamento">Em Andamento</option>
+                            <option value="concluido">Concluído</option>
+                        </select>
+                        <select id="filtroUrgencia" class="bg-blue-900/30 rounded-lg text-sm px-3 py-1.5 border border-blue-800/50">
+                            <option value="todos">Todas urgências</option>
+                            <option value="urgente">Urgente</option>
+                            <option value="normal">Normal</option>
+                        </select>
+                        <button onclick="exportarPDF()" class="bg-red-600/30 hover:bg-red-600/50 rounded-lg text-sm px-3 py-1.5 transition">
+                            <i class="fas fa-file-pdf mr-1"></i>PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nº Processo</th>
+                            <th>Cliente</th>
+                            <th>Parte Contrária</th>
+                            <th>Valor Causa</th>
+                            <th>Próximo Prazo</th>
+                            <th>Audiência</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaProcessos"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAIS COMPLETOS -->
+    
+    <!-- Modal Processo Expandido -->
+    <div id="modalProcesso" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 overflow-y-auto">
+        <div class="modal-glass rounded-2xl w-full max-w-4xl mx-4 my-8">
+            <div class="p-6 border-b border-blue-800/50 flex justify-between items-center">
+                <h3 class="text-2xl font-bold" id="modalTitulo">Novo Processo</h3>
+                <button onclick="fecharModal('modalProcesso')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <form id="formProcesso" class="p-6">
+                <input type="hidden" id="processoId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Número do Processo *</label>
+                        <input type="text" id="numeroProcesso" required class="input-modern w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Data de Distribuição</label>
+                        <input type="date" id="dataDistribuicao" class="input-modern w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Cliente *</label>
+                        <input type="text" id="cliente" required class="input-modern w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">CPF/CNPJ</label>
+                        <input type="text" id="cpfCliente" class="input-modern w-full" oninput="this.value = this.value.replace(/[^0-9.-]/g, '')">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Parte Contrária</label>
+                        <input type="text" id="parteContraria" class="input-modern w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Advogado Adverso</label>
+                        <input type="text" id="advogadoAdverso" class="input-modern w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Valor da Causa</label>
+                        <input type="number" id="valorCausa" class="input-modern w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Honorários</label>
+                        <input type="number" id="honorarios" class="input-modern w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Vara/Comarca</label>
+                        <input type="text" id="vara" class="input-modern w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Status</label>
+                        <select id="status" class="input-modern w-full">
+                            <option value="aguardando">Aguardando</option>
+                            <option value="andamento">Em Andamento</option>
+                            <option value="concluido">Concluído</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-2">Próximo Prazo</label>
+                        <input type="date" id="proximoPrazo" class="input-modern w-full">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-2">Observações</label>
+                        <textarea id="observacoes" rows="3" class="input-modern w-full"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-2">Resultado (se concluído)</label>
+                        <select id="resultado" class="input-modern w-full">
+                            <option value="">Selecione...</option>
+                            <option value="ganho">Ganho</option>
+                            <option value="perdido">Perdido</option>
+                            <option value="acordo">Acordo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="flex-1 btn-primary py-2 rounded-lg transition">Salvar Processo</button>
+                    <button type="button" onclick="fecharModal('modalProcesso')" class="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg transition">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Audiência -->
+    <div id="modalAudiencia" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
+        <div class="modal-glass rounded-2xl w-full max-w-md mx-4">
+            <div class="p-6 border-b border-blue-800/50 flex justify-between">
+                <h3 class="text-xl font-bold">Agendar Audiência</h3>
+                <button onclick="fecharModal('modalAudiencia')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <form id="formAudiencia" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm mb-2">Processo *</label>
+                    <select id="audienciaProcesso" required class="input-modern w-full"></select>
+                </div>
+                <div>
+                    <label class="block text-sm mb-2">Data e Hora *</label>
+                    <input type="datetime-local" id="audienciaData" required class="input-modern w-full">
+                </div>
+                <div>
+                    <label class="block text-sm mb-2">Tipo</label>
+                    <select id="audienciaTipo" class="input-modern w-full">
+                        <option>Instrução e Julgamento</option>
+                        <option>Conciliação</option>
+                        <option>Mediação</option>
+                        <option>Testemunhas</option>
+                        <option>Ratificação</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm mb-2">Local</label>
+                    <input type="text" id="audienciaLocal" class="input-modern w-full" placeholder="Endereço completo">
+                </div>
+                <div>
+                    <label class="block text-sm mb-2">Observações</label>
+                    <textarea id="audienciaObs" rows="2" class="input-modern w-full"></textarea>
+                </div>
+                <button type="submit" class="w-full btn-primary py-2 rounded-lg transition">Agendar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Petição com Templates -->
+    <div id="modalPeticao" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
+        <div class="modal-glass rounded-2xl w-full max-w-3xl mx-4">
+            <div class="p-6 border-b border-blue-800/50 flex justify-between">
+                <h3 class="text-xl font-bold">Gerador de Petições Inteligente</h3>
+                <button onclick="fecharModal('modalPeticao')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <form id="formPeticao" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm mb-2">Processo</label>
+                    <select id="peticaoProcesso" class="input-modern w-full"></select>
+                </div>
+                <div>
+                    <label class="block text-sm mb-2">Modelo de Petição</label>
+                    <select id="peticaoModelo" class="input-modern w-full" onchange="carregarModeloPeticao()">
+                        <option value="">Selecione um modelo...</option>
+                        <option value="inicial">Petição Inicial</option>
+                        <option value="contestacao">Contestação</option>
+                        <option value="recurso">Recurso de Apelação</option>
+                        <option value="embargos">Embargos de Declaração</option>
+                        <option value="manifestacao">Manifestação</option>
+                        <option value="cumprimento">Cumprimento de Sentença</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm mb-2">Conteúdo Personalizado</label>
+                    <textarea id="peticaoConteudo" rows="10" class="input-modern w-full font-mono text-sm" placeholder="Digite ou edite o conteúdo da petição..."></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="gerarPeticaoPreview()" class="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg transition">Pré-visualizar</button>
+                    <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-lg transition">Salvar Minuta</button>
+                    <button type="button" onclick="salvarComoModelo()" class="flex-1 bg-cyan-600 hover:bg-cyan-700 py-2 rounded-lg transition">Salvar como Modelo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Financeiro/Honorários -->
+    <div id="modalHonorarios" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
+        <div class="modal-glass rounded-2xl w-full max-w-2xl mx-4">
+            <div class="p-6 border-b border-blue-800/50 flex justify-between">
+                <h3 class="text-xl font-bold"><i class="fas fa-chart-line mr-2"></i>Dashboard Financeiro</h3>
+                <button onclick="fecharModal('modalHonorarios')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="glass-card rounded-lg p-4 text-center">
+                        <p class="text-gray-400 text-sm">Receita Total</p>
+                        <p class="text-2xl font-bold text-green-400" id="financeiroTotal">R$ 0</p>
+                    </div>
+                    <div class="glass-card rounded-lg p-4 text-center">
+                        <p class="text-gray-400 text-sm">Receita Pendente</p>
+                        <p class="text-2xl font-bold text-yellow-400" id="financeiroPendente">R$ 0</p>
+                    </div>
+                </div>
+                <canvas id="graficoHonorarios" height="200"></canvas>
+                <div class="mt-4">
+                    <h4 class="font-bold mb-2">Lançamentos</h4>
+                    <div id="listaFinanceiro" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                    <button onclick="adicionarRecebimento()" class="w-full mt-3 btn-primary py-2 rounded-lg transition">
+                        <i class="fas fa-plus mr-2"></i>Registrar Recebimento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Documentos e Modelos -->
+    <div id="modalDocumentos" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
+        <div class="modal-glass rounded-2xl w-full max-w-3xl mx-4">
+            <div class="p-6 border-b border-blue-800/50 flex justify-between">
+                <h3 class="text-xl font-bold"><i class="fas fa-folder-open mr-2"></i>Documentos e Modelos</h3>
+                <button onclick="fecharModal('modalDocumentos')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold mb-3">Meus Modelos</h4>
+                        <div id="listaModelosUsuario" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                        <button onclick="importarModelo()" class="w-full mt-3 bg-indigo-600 hover:bg-indigo-700 py-2 rounded-lg transition">
+                            <i class="fas fa-upload mr-2"></i>Importar Modelo
+                        </button>
+                    </div>
+                    <div>
+                        <h4 class="font-bold mb-3">Modelos Prontos (Jurisprudência)</h4>
+                        <div id="listaModelosProntos" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                        <button onclick="buscarJurisprudencia()" class="w-full mt-3 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg transition">
+                            <i class="fas fa-search mr-2"></i>Buscar Jurisprudência
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Relatórios -->
+    <div id="modalRelatorios" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
+        <div class="modal-glass rounded-2xl w-full max-w-2xl mx-4">
+            <div class="p-6 border-b border-blue-800/50 flex justify-between">
+                <h3 class="text-xl font-bold"><i class="fas fa-chart-bar mr-2"></i>Gerar Relatórios</h3>
+                <button onclick="fecharModal('modalRelatorios')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="glass-card rounded-lg p-4 hover:bg-blue-900/30 cursor-pointer" onclick="gerarRelatorioProcessos()">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-balance-scale text-3xl text-blue-400"></i>
+                            <div>
+                                <h4 class="font-bold">Relatório de Processos</h4>
+                                <p class="text-sm text-gray-400">Lista completa com todos os detalhes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-lg p-4 hover:bg-blue-900/30 cursor-pointer" onclick="gerarRelatorioFinanceiro()">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-dollar-sign text-3xl text-green-400"></i>
+                            <div>
+                                <h4 class="font-bold">Relatório Financeiro</h4>
+                                <p class="text-sm text-gray-400">Honorários, receitas e projeções</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-lg p-4 hover:bg-blue-900/30 cursor-pointer" onclick="gerarRelatorioPrazos()">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-hourglass-half text-3xl text-red-400"></i>
+                            <div>
+                                <h4 class="font-bold">Relatório de Prazos</h4>
+                                <p class="text-sm text-gray-400">Prazos fatais e a vencer</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-lg p-4 hover:bg-blue-900/30 cursor-pointer" onclick="gerarRelatorioAudiencias()">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-gavel text-3xl text-purple-400"></i>
+                            <div>
+                                <h4 class="font-bold">Relatório de Audiências</h4>
+                                <p class="text-sm text-gray-400">Calendário mensal de audiências</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Configurações -->
+    <div id="modalConfig" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
+        <div class="modal-glass rounded-2xl w-full max-w-2xl mx-4">
+            <div class="p-6 border-b border-blue-800/50 flex justify-between">
+                <h3 class="text-xl font-bold"><i class="fas fa-cog mr-2"></i>Configurações</h3>
+                <button onclick="fecharModal('modalConfig')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="font-bold mb-3">Feriados (para cálculo de prazos)</h4>
+                        <div id="listaFeriados" class="space-y-2 mb-3 max-h-40 overflow-y-auto"></div>
+                        <div class="flex gap-2">
+                            <input type="date" id="novoFeriado" class="input-modern flex-1">
+                            <button onclick="adicionarFeriado()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg transition">Adicionar</button>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold mb-3">Meta Financeira Mensal</h4>
+                        <div class="flex gap-2">
+                            <input type="number" id="metaFinanceira" class="input-modern flex-1" placeholder="R$ 20.000">
+                            <button onclick="salvarMetaFinanceira()" class="btn-primary px-4 py-2 rounded-lg transition">Salvar</button>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold mb-3">Notificações</h4>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="notifPrazos" checked> Notificar prazos fatais
+                        </label>
+                        <label class="flex items-center gap-2 mt-2">
+                            <input type="checkbox" id="notifAudiencias" checked> Notificar audiências
+                        </label>
+                    </div>
+                    <div>
+                        <h4 class="font-bold mb-3">Backup de Dados</h4>
+                        <button onclick="exportarBackup()" class="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg transition mr-2">
+                            <i class="fas fa-download mr-2"></i>Exportar Backup
+                        </button>
+                        <button onclick="importarBackup()" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-upload mr-2"></i>Importar Backup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tarefa -->
+    <div id="modalTarefa" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
+        <div class="modal-glass rounded-2xl w-full max-w-md mx-4">
+            <div class="p-6 border-b border-blue-800/50 flex justify-between">
+                <h3 class="text-xl font-bold">Nova Tarefa</h3>
+                <button onclick="fecharModal('modalTarefa')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <form id="formTarefa" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm mb-2">Descrição</label>
+                    <input type="text" id="tarefaDescricao" required class="input-modern w-full">
+                </div>
+                <div>
+                    <label class="block text-sm mb-2">Prazo</label>
+                    <input type="datetime-local" id="tarefaPrazo" required class="input-modern w-full">
+                </div>
+                <div>
+                    <label class="block text-sm mb-2">Prioridade</label>
+                    <select id="tarefaPrioridade" class="input-modern w-full">
+                        <option value="Alta">Alta</option>
+                        <option value="Média">Média</option>
+                        <option value="Baixa">Baixa</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm mb-2">Vincular ao Processo (opcional)</label>
+                    <select id="tarefaProcesso" class="input-modern w-full">
+                        <option value="">Nenhum</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full btn-primary py-2 rounded-lg transition">Adicionar Tarefa</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal BI / Painel de Controle -->
+    <div id="modalBI" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 overflow-y-auto">
+        <div class="modal-glass rounded-2xl w-full max-w-6xl mx-4 my-8">
+            <div class="p-6 border-b border-blue-800/50 flex justify-between">
+                <h3 class="text-xl font-bold"><i class="fas fa-chart-line mr-2"></i>Business Intelligence - Análise Avançada</h3>
+                <button onclick="fecharModal('modalBI')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <canvas id="graficoStatus" height="250"></canvas>
+                        <p class="text-center text-sm text-gray-400 mt-2">Distribuição por Status</p>
+                    </div>
+                    <div>
+                        <canvas id="graficoMensal" height="250"></canvas>
+                        <p class="text-center text-sm text-gray-400 mt-2">Processos por Mês</p>
+                    </div>
+                    <div>
+                        <canvas id="graficoHonorariosBI" height="250"></canvas>
+                        <p class="text-center text-sm text-gray-400 mt-2">Honorários Mensais</p>
+                    </div>
+                    <div>
+                        <canvas id="graficoUrgencia" height="250"></canvas>
+                        <p class="text-center text-sm text-gray-400 mt-2">Nível de Urgência</p>
+                    </div>
+                </div>
+                <div class="mt-6 p-4 glass-card rounded-lg">
+                    <h4 class="font-bold mb-2">Insights e Recomendações</h4>
+                    <div id="insightsContainer" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== ESTRUTURA DE DADOS EXPANDIDA ====================
+        let processos = [];
+        let audiencias = [];
+        let tarefas = [];
+        let financeiro = [];
+        let modelosUsuario = [];
+        let notificacoes = [];
+        let feriados = ['25-12', '01-01', '07-09', '15-11'];
+        let metaFinanceira = 20000;
+        
+        // Modelos padrão de petições
+        const modelosProntos = {
+            inicial: `Excelentíssimo Senhor Doutor Juiz de Direito da [VARA] Vara Cível da Comarca de [CIDADE].
+            
+[NOME DO CLIENTE], [NACIONALIDADE], [ESTADO CIVIL], [PROFISSÃO], portador do CPF sob n° [CPF], residente e domiciliado na [ENDEREÇO], vem, respeitosamente, por intermédio de seu advogado, propor a presente
+
+AÇÃO [TIPO DE AÇÃO]
+
+em face de [PARTE CONTRARIA], [NACIONALIDADE], [ESTADO CIVIL], [PROFISSÃO], portador do CPF sob n° [CPF], com endereço na [ENDEREÇO], pelos fatos e fundamentos a seguir expostos.
+
+I - DOS FATOS
+[Descrever os fatos...]
+
+II - DO DIREITO
+[Fundamentação jurídica...]
+
+III - DOS PEDIDOS
+Diante do exposto, requer:
+1. A citação do réu para, querendo, contestar a presente ação;
+2. A procedência dos pedidos para [pedido principal];
+3. A condenação do réu ao pagamento das custas processuais e honorários advocatícios.
+
+Dá-se à causa o valor de R$ [VALOR].
+
+Termos em que,
+Pede deferimento.
+[Cidade], [DATA]`,
+            contestacao: `EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO DA [VARA] VARA CÍVEL DA COMARCA DE [CIDADE]
+Processo nº [NUMERO]
+
+[NOME DO CLIENTE], devidamente qualificado nos autos do processo em epígrafe, que lhe move [PARTE AUTORA], vem, respeitosamente, apresentar
+
+CONTESTAÇÃO
+
+pelos fatos e fundamentos a seguir expostos.
+
+I - PRELIMINARMENTE
+[Argumentos preliminares...]
+
+II - MÉRITO
+[Defesa de mérito...]
+
+III - DOS PEDIDOS
+Requer seja julgada TOTALMENTE PROCEDENTE a presente contestação, com a consequente improcedência dos pedidos autorais.
+
+Protesta por todos os meios de prova em direito admitidos.
+
+Nestes termos,
+Pede deferimento.
+[Cidade], [DATA]`,
+            recurso: `EXCELENTÍSSIMO SENHOR DOUTOR DESEMBARGADOR PRESIDENTE DO EGRÉGIO TRIBUNAL DE JUSTIÇA DO ESTADO DE [ESTADO]
+
+Apelante: [NOME]
+Apelado: [NOME]
+Processo nº: [NUMERO]
+Origem: [VARA] Vara Cível da Comarca de [CIDADE]
+
+RAZÕES DE APELAÇÃO
+
+Egrégio Tribunal,
+Colenda Câmara,
+
+I - TEMPESTIVIDADE
+O presente recurso é tempestivo...
+
+II - SÍNTESE PROCESSUAL
+[Resumo do processo...]
+
+III - RAZÕES RECURSAIS
+[Argumentos do recurso...]
+
+IV - PEDIDO
+Diante do exposto, requer o conhecimento e provimento do presente recurso para [pedido].
+
+Termos em que,
+Pede deferimento.
+[Cidade], [DATA]`
+        };
+        
+        // ==================== FUNÇÕES UTILITÁRIAS ====================
+        function formatarMoeda(valor) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
+        }
+        
+        function formatarData(dataString) {
+            if (!dataString) return '—';
+            return new Date(dataString).toLocaleDateString('pt-BR');
+        }
+        
+        function formatarDataHora(dataString) {
+            if (!dataString) return '—';
+            return new Date(dataString).toLocaleString('pt-BR');
+        }
+        
+        function getStatusPrazo(dataPrazo) {
+            if (!dataPrazo) return 'normal';
+            const hoje = new Date();
+            const prazo = new Date(dataPrazo);
+            const diffDays = Math.ceil((prazo - hoje) / (1000 * 60 * 60 * 24));
+            if (diffDays <= 2 && diffDays >= 0) return 'urgente';
+            if (diffDays <= 5 && diffDays > 2) return 'atencao';
+            return 'normal';
+        }
+        
+        function fecharModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.getElementById(modalId).classList.remove('flex');
+        }
+        
+        function abrirModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.getElementById(modalId).classList.add('flex');
+        }
+        
+        function addNotificacao(mensagem, tipo = 'info') {
+            const notif = { id: Date.now(), mensagem, tipo, lida: false, data: new Date().toISOString() };
+            notificacoes.unshift(notif);
+            if (notificacoes.length > 50) notificacoes.pop();
+            localStorage.setItem('advflow_notificacoes', JSON.stringify(notificacoes));
+            atualizarNotificacoes();
+            
+            // Toast
+            Swal.fire({
+                title: tipo === 'urgente' ? '⚠️ Atenção!' : '📢 Notificação',
+                text: mensagem,
+                icon: tipo === 'urgente' ? 'warning' : 'info',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true
+            });
+        }
+        
+        function atualizarNotificacoes() {
+            const naoLidas = notificacoes.filter(n => !n.lida).length;
+            const badge = document.getElementById('notifBadge');
+            if (naoLidas > 0) {
+                badge.classList.remove('hidden');
+                badge.innerText = naoLidas > 9 ? '9+' : naoLidas;
+            } else {
+                badge.classList.add('hidden');
+            }
+            
+            const panel = document.getElementById('listaNotificacoesPanel');
+            if (panel) {
+                panel.innerHTML = notificacoes.slice(0,10).map(n => `
+                    <div class="p-3 hover:bg-blue-900/30 cursor-pointer ${!n.lida ? 'border-l-4 border-blue-500' : ''}" onclick="marcarNotificacaoLida(${n.id})">
+                        <p class="text-sm">${n.mensagem}</p>
+                        <p class="text-xs text-gray-500 mt-1">${formatarDataHora(n.data)}</p>
+                    </div>
+                `).join('');
+                if (notificacoes.length === 0) {
+                    panel.innerHTML = '<div class="p-3 text-center text-gray-500">Sem notificações</div>';
+                }
+            }
+        }
+        
+        function marcarNotificacaoLida(id) {
+            const notif = notificacoes.find(n => n.id === id);
+            if (notif) notif.lida = true;
+            localStorage.setItem('advflow_notificacoes', JSON.stringify(notificacoes));
+            atualizarNotificacoes();
+        }
+        
+        function toggleNotificacoes() {
+            const panel = document.getElementById('notificacoesPanel');
+            panel.classList.toggle('hidden');
+        }
+        
+        // ==================== CRUD PRINCIPAL ====================
+        function carregarDados() {
+            const saved = localStorage.getItem('advflow_processos');
+            processos = saved ? JSON.parse(saved) : [
+                { id: 1, numero: '0012345-67.2024.8.26.0100', cliente: 'Empresa ABC Ltda', cpfCliente: '12.345.678/0001-90', parteContraria: 'Fornecedor XYZ', advogadoAdverso: 'Dr. Carlos Silva', valorCausa: 50000, honorarios: 5000, vara: '2ª Vara Cível', status: 'aguardando', proximoPrazo: '2025-05-20', dataDistribuicao: '2024-01-15', observacoes: 'Aguardando citação', resultado: null },
+                { id: 2, numero: '0098765-43.2024.8.26.0100', cliente: 'João Silva', cpfCliente: '123.456.789-00', parteContraria: 'Banco do Brasil S/A', advogadoAdverso: 'Dra. Mariana Santos', valorCausa: 25000, honorarios: 3000, vara: '1ª Vara Empresarial', status: 'andamento', proximoPrazo: '2025-05-10', dataDistribuicao: '2024-02-20', observacoes: 'Em fase de instrução', resultado: null },
+                { id: 3, numero: '0076543-21.2024.8.26.0100', cliente: 'Maria Oliveira', cpfCliente: '987.654.321-00', parteContraria: 'Construtora Norte', advogadoAdverso: 'Dr. Roberto Almeida', valorCausa: 150000, honorarios: 12000, vara: '3ª Vara Cível', status: 'concluido', proximoPrazo: null, dataDistribuicao: '2023-10-10', observacoes: 'Sentença favorável', resultado: 'ganho' }
+            ];
+            
+            const savedAudiencias = localStorage.getItem('advflow_audiencias');
+            audiencias = savedAudiencias ? JSON.parse(savedAudiencias) : [
+                { id: 1, processoId: 2, data: new Date(new Date().setHours(14,30,0,0)).toISOString(), tipo: 'Instrução e Julgamento', local: 'Fórum Central - Sala 302', observacoes: 'Levar procuração' }
+            ];
+            
+            const savedTarefas = localStorage.getItem('advflow_tarefas');
+            tarefas = savedTarefas ? JSON.parse(savedTarefas) : [
+                { id: 1, descricao: 'Analisar petição inicial do processo ABC', prazo: new Date(new Date().setHours(18,0,0,0)).toISOString(), prioridade: 'Alta', processoId: null, concluida: false }
+            ];
+            
+            const savedFinanceiro = localStorage.getItem('advflow_financeiro');
+            financeiro = savedFinanceiro ? JSON.parse(savedFinanceiro) : [];
+            
+            const savedModelos = localStorage.getItem('advflow_modelos');
+            modelosUsuario = savedModelos ? JSON.parse(savedModelos) : [];
+            
+            const savedNotificacoes = localStorage.getItem('advflow_notificacoes');
+            notificacoes = savedNotificacoes ? JSON.parse(savedNotificacoes) : [];
+            
+            const savedFeriados = localStorage.getItem('advflow_feriados');
+            if (savedFeriados) feriados = JSON.parse(savedFeriados);
+            
+            const savedMeta = localStorage.getItem('advflow_meta');
+            if (savedMeta) metaFinanceira = parseFloat(savedMeta);
+            
+            atualizarUI();
+            verificarPrazosEAudiencias();
+            
+            // Verificar a cada hora
+            setInterval(() => verificarPrazosEAudiencias(), 3600000);
+        }
+        
+        function verificarPrazosEAudiencias() {
+            // Verificar prazos fatais
+            const hoje = new Date();
+            processos.forEach(p => {
+                if (p.proximoPrazo) {
+                    const prazo = new Date(p.proximoPrazo);
+                    const diffDays = Math.ceil((prazo - hoje) / (1000 * 60 * 60 * 24));
+                    if (diffDays === 2) {
+                        addNotificacao(`Prazo fatal em 2 dias! Processo ${p.numero} - ${p.cliente}`, 'urgente');
+                    } else if (diffDays === 1) {
+                        addNotificacao(`⚠️ Prazo fatal AMANHÃ! Processo ${p.numero} - ${p.cliente}`, 'urgente');
+                    } else if (diffDays === 0) {
+                        addNotificacao(`🚨 PRAZO VENCE HOJE! Processo ${p.numero} - ${p.cliente}`, 'urgente');
+                    }
+                }
+            });
+            
+            // Verificar audiências de hoje
+            audiencias.forEach(a => {
+                const dataAudiencia = new Date(a.data);
+                if (dataAudiencia.toDateString() === hoje.toDateString()) {
+                    const processo = processos.find(p => p.id === a.processoId);
+                    addNotificacao(`Audiência HOJE às ${dataAudiencia.toLocaleTimeString()} - ${processo?.numero || 'Processo'}`, 'info');
+                }
+            });
+        }
+        
+        function salvarProcessos() { localStorage.setItem('advflow_processos', JSON.stringify(processos)); }
+        function salvarAudiencias() { localStorage.setItem('advflow_audiencias', JSON.stringify(audiencias)); }
+        function salvarTarefas() { localStorage.setItem('advflow_tarefas', JSON.stringify(tarefas)); }
+        function salvarFinanceiro() { localStorage.setItem('advflow_financeiro', JSON.stringify(financeiro)); }
+        function salvarModelos() { localStorage.setItem('advflow_modelos', JSON.stringify(modelosUsuario)); }
+        
+        function salvarProcesso(event) {
+            event.preventDefault();
+            const id = document.getElementById('processoId').value;
+            const processo = {
+                id: id ? parseInt(id) : Date.now(),
+                numero: document.getElementById('numeroProcesso').value,
+                cliente: document.getElementById('cliente').value,
+                cpfCliente: document.getElementById('cpfCliente').value,
+                parteContraria: document.getElementById('parteContraria').value,
+                advogadoAdverso: document.getElementById('advogadoAdverso').value,
+                valorCausa: parseFloat(document.getElementById('valorCausa').value) || 0,
+                honorarios: parseFloat(document.getElementById('honorarios').value) || 0,
+                vara: document.getElementById('vara').value,
+                status: document.getElementById('status').value,
+                proximoPrazo: document.getElementById('proximoPrazo').value,
+                dataDistribuicao: document.getElementById('dataDistribuicao').value,
+                observacoes: document.getElementById('observacoes').value,
+                resultado: document.getElementById('resultado').value || null
+            };
+            
+            if (!id) {
+                addNotificacao(`Novo processo criado: ${processo.numero} - ${processo.cliente}`, 'info');
+            }
+            
+            if (id) {
+                const index = processos.findIndex(p => p.id === parseInt(id));
+                processos[index] = { ...processos[index], ...processo };
+            } else {
+                processos.push(processo);
+            }
+            
+            salvarProcessos();
+            fecharModal('modalProcesso');
+            atualizarUI();
+            Swal.fire('Sucesso!', 'Processo salvo com sucesso', 'success');
+        }
+        
+        function editarProcesso(id) {
+            const processo = processos.find(p => p.id === id);
+            if (processo) {
+                document.getElementById('modalTitulo').innerText = 'Editar Processo';
+                document.getElementById('processoId').value = processo.id;
+                document.getElementById('numeroProcesso').value = processo.numero;
+                document.getElementById('cliente').value = processo.cliente;
+                document.getElementById('cpfCliente').value = processo.cpfCliente || '';
+                document.getElementById('parteContraria').value = processo.parteContraria || '';
+                document.getElementById('advogadoAdverso').value = processo.advogadoAdverso || '';
+                document.getElementById('valorCausa').value = processo.valorCausa;
+                document.getElementById('honorarios').value = processo.honorarios;
+                document.getElementById('vara').value = processo.vara || '';
+                document.getElementById('status').value = processo.status;
+                document.getElementById('proximoPrazo').value = processo.proximoPrazo || '';
+                document.getElementById('dataDistribuicao').value = processo.dataDistribuicao || '';
+                document.getElementById('observacoes').value = processo.observacoes || '';
+                document.getElementById('resultado').value = processo.resultado || '';
+                abrirModal('modalProcesso');
+            }
+        }
+        
+        function excluirProcesso(id) {
+            Swal.fire({
+                title: 'Confirmar exclusão',
+                text: 'Deseja realmente excluir este processo?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sim, excluir!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    processos = processos.filter(p => p.id !== id);
+                    audiencias = audiencias.filter(a => a.processoId !== id);
+                    salvarProcessos();
+                    salvarAudiencias();
+                    atualizarUI();
+                    Swal.fire('Excluído!', 'Processo removido com sucesso', 'success');
+                }
+            });
+        }
+        
+        function atualizarStatusProcesso(id, novoStatus) {
+            const processo = processos.find(p => p.id === id);
+            if (processo) {
+                processo.status = novoStatus;
+                if (novoStatus === 'concluido') {
+                    Swal.fire({
+                        title: 'Concluir Processo',
+                        text: 'Registre o resultado do processo',
+                        input: 'select',
+                        inputOptions: { 'ganho': 'Ganho', 'perdido': 'Perdido', 'acordo': 'Acordo' },
+                        showCancelButton: true
+                    }).then((result) => {
+                        if (result.value) {
+                            processo.resultado = result.value;
+                            addNotificacao(`Processo ${processo.numero} concluído com resultado: ${result.value}`, 'info');
+                        }
+                        salvarProcessos();
+                        atualizarUI();
+                    });
+                } else {
+                    salvarProcessos();
+                    atualizarUI();
+                }
+            }
+        }
+        
+        // ==================== AUDIÊNCIAS ====================
+        function salvarAudiencia(event) {
+            event.preventDefault();
+            const audiencia = {
+                id: Date.now(),
+                processoId: parseInt(document.getElementById('audienciaProcesso').value),
+                data: document.getElementById('audienciaData').value,
+                tipo: document.getElementById('audienciaTipo').value,
+                local: document.getElementById('audienciaLocal').value,
+                observacoes: document.getElementById('audienciaObs').value
+            };
+            audiencias.push(audiencia);
+            salvarAudiencias();
+            fecharModal('modalAudiencia');
+            atualizarUI();
+            addNotificacao(`Audiência agendada para ${formatarDataHora(audiencia.data)}`, 'info');
+            Swal.fire('Agendado!', 'Audiência agendada com sucesso', 'success');
+        }
+        
+        // ==================== TAREFAS ====================
+        function salvarTarefa(event) {
+            event.preventDefault();
+            const tarefa = {
+                id: Date.now(),
+                descricao: document.getElementById('tarefaDescricao').value,
+                prazo: document.getElementById('tarefaPrazo').value,
+                prioridade: document.getElementById('tarefaPrioridade').value,
+                processoId: document.getElementById('tarefaProcesso').value ? parseInt(document.getElementById('tarefaProcesso').value) : null,
+                concluida: false
+            };
+            tarefas.push(tarefa);
+            salvarTarefas();
+            fecharModal('modalTarefa');
+            atualizarUI();
+            Swal.fire('Tarefa adicionada!', '', 'success');
+        }
+        
+        function concluirTarefa(id) {
+            const tarefa = tarefas.find(t => t.id === id);
+            if (tarefa) {
+                tarefa.concluida = true;
+                salvarTarefas();
+                atualizarUI();
+                Swal.fire('Tarefa concluída!', 'Parabéns!', 'success');
+            }
+        }
+        
+        function excluirTarefa(id) {
+            tarefas = tarefas.filter(t => t.id !== id);
+            salvarTarefas();
+            atualizarUI();
+        }
+        
+        // ==================== PETIÇÕES E MODELOS ====================
+        function carregarModeloPeticao() {
+            const modelo = document.getElementById('peticaoModelo').value;
+            if (modelo && modelosProntos[modelo]) {
+                let conteudo = modelosProntos[modelo];
+                const processoId = document.getElementById('peticaoProcesso').value;
+                if (processoId) {
+                    const processo = processos.find(p => p.id === parseInt(processoId));
+                    if (processo) {
+                        conteudo = conteudo.replace(/\[NUMERO\]/g, processo.numero)
+                            .replace(/\[NOME DO CLIENTE\]/g, processo.cliente)
+                            .replace(/\[PARTE CONTRARIA\]/g, processo.parteContraria || 'PARTE CONTRÁRIA')
+                            .replace(/\[VALOR\]/g, formatarMoeda(processo.valorCausa))
+                            .replace(/\[CIDADE\]/g, 'São Paulo')
+                            .replace(/\[DATA\]/g, new Date().toLocaleDateString('pt-BR'));
+                    }
+                }
+                document.getElementById('peticaoConteudo').value = conteudo;
+            }
+        }
+        
+        function gerarPeticaoPreview() {
+            const conteudo = document.getElementById('peticaoConteudo').value;
+            Swal.fire({
+                title: 'Pré-visualização da Petição',
+                html: `<div class="text-left text-gray-700 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded"><pre style="white-space: pre-wrap; font-family: inherit;">${conteudo}</pre></div>`,
+                width: '800px',
+                confirmButtonText: 'Fechar'
+            });
+        }
+        
+        function salvarPeticao(event) {
+            event.preventDefault();
+            const modelo = document.getElementById('peticaoModelo').value;
+            const conteudo = document.getElementById('peticaoConteudo').value;
+            const processoId = document.getElementById('peticaoProcesso').value;
+            
+            // Salvar como minuta
+            const minuta = {
+                id: Date.now(),
+                nome: `Petição ${modelo || 'personalizada'} - ${new Date().toLocaleString()}`,
+                conteudo: conteudo,
+                processoId: processoId ? parseInt(processoId) : null,
+                data: new Date().toISOString()
+            };
+            modelosUsuario.push(minuta);
+            salvarModelos();
+            
+            // Opcional: salvar no financeiro como andamento
+            addNotificacao(`Minuta de petição salva: ${minuta.nome}`, 'info');
+            
+            Swal.fire('Minuta salva!', 'A petição foi salva em seus documentos', 'success');
+            fecharModal('modalPeticao');
+        }
+        
+        function salvarComoModelo() {
+            const conteudo = document.getElementById('peticaoConteudo').value;
+            if (!conteudo) {
+                Swal.fire('Erro', 'Digite o conteúdo da petição primeiro', 'error');
+                return;
+            }
+            
+            Swal.fire({
+                title: 'Salvar como Modelo',
+                input: 'text',
+                inputLabel: 'Nome do modelo',
+                inputPlaceholder: 'Ex: Modelo de Contestação Trabalhista',
+                showCancelButton: true
+            }).then((result) => {
+                if (result.value) {
+                    const modelo = {
+                        id: Date.now(),
+                        nome: result.value,
+                        conteudo: conteudo,
+                        data: new Date().toISOString()
+                    };
+                    modelosUsuario.push(modelo);
+                    salvarModelos();
+                    Swal.fire('Modelo salvo!', 'Seu modelo foi adicionado à biblioteca', 'success');
+                }
+            });
+        }
+        
+        // ==================== FINANCEIRO ====================
+        function adicionarRecebimento() {
+            Swal.fire({
+                title: 'Registrar Recebimento',
+                html: `
+                    <input id="swalValor" class="swal2-input" placeholder="Valor recebido" type="number" step="0.01">
+                    <input id="swalProcesso" class="swal2-input" placeholder="Processo (opcional)">
+                    <input id="swalData" class="swal2-input" type="date" value="${new Date().toISOString().split('T')[0]}">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Registrar',
+                preConfirm: () => {
+                    const valor = parseFloat(document.getElementById('swalValor').value);
+                    const processo = document.getElementById('swalProcesso').value;
+                    const data = document.getElementById('swalData').value;
+                    if (!valor) {
+                        Swal.showValidationMessage('Informe o valor');
+                    }
+                    return { valor, processo, data };
+                }
+            }).then((result) => {
+                if (result.value) {
+                    financeiro.push({
+                        id: Date.now(),
+                        valor: result.value.valor,
+                        processo: result.value.processo,
+                        data: result.value.data,
+                        tipo: 'recebimento'
+                    });
+                    salvarFinanceiro();
+                    atualizarUI();
+                    Swal.fire('Registrado!', 'Recebimento adicionado com sucesso', 'success');
+                }
+            });
+        }
+        
+        // ==================== RELATÓRIOS ====================
+        function exportarExcel() {
+            const dados = processos.map(p => ({
+                'Nº Processo': p.numero,
+                'Cliente': p.cliente,
+                'CPF/CNPJ': p.cpfCliente,
+                'Parte Contrária': p.parteContraria,
+                'Valor da Causa': p.valorCausa,
+                'Honorários': p.honorarios,
+                'Vara': p.vara,
+                'Status': p.status,
+                'Próximo Prazo': formatarData(p.proximoPrazo),
+                'Resultado': p.resultado || '—'
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(dados);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Processos');
+            XLSX.writeFile(wb, `processos_${new Date().toISOString().split('T')[0]}.xlsx`);
+            Swal.fire('Exportado!', 'Arquivo Excel gerado com sucesso', 'success');
+        }
+        
+        async function exportarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.text('Relatório de Processos - AdvFlow Pro', 14, 20);
+            doc.setFontSize(10);
+            doc.text(`Gerado em: ${new Date().toLocaleString()}`, 14, 30);
+            
+            const dados = processos.map(p => [
+                p.numero,
+                p.cliente.substring(0, 20),
+                p.parteContraria?.substring(0, 20) || '—',
+                formatarMoeda(p.valorCausa),
+                formatarData(p.proximoPrazo),
+                p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Em Andamento' : 'Concluído')
+            ]);
+            
+            doc.autoTable({
+                head: [['Nº Processo', 'Cliente', 'Parte Contrária', 'Valor', 'Prazo', 'Status']],
+                body: dados,
+                startY: 40,
+                theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [59, 130, 246] }
+            });
+            
+            doc.save(`relatorio_processos_${new Date().toISOString().split('T')[0]}.pdf`);
+            Swal.fire('PDF Gerado!', 'Relatório exportado com sucesso', 'success');
+        }
+        
+        function gerarRelatorioProcessos() {
+            exportarPDF();
+            fecharModal('modalRelatorios');
+        }
+        
+        function gerarRelatorioFinanceiro() {
+            const totalReceitas = financeiro.reduce((sum, f) => sum + f.valor, 0);
+            const honorariosPendentes = processos.filter(p => p.status !== 'concluido').reduce((sum, p) => sum + (p.honorarios || 0), 0);
+            
+            Swal.fire({
+                title: 'Relatório Financeiro',
+                html: `
+                    <div class="text-left">
+                        <p><strong>Receitas Realizadas:</strong> ${formatarMoeda(totalReceitas)}</p>
+                        <p><strong>Honorários Pendentes:</strong> ${formatarMoeda(honorariosPendentes)}</p>
+                        <p><strong>Meta Mensal:</strong> ${formatarMoeda(metaFinanceira)}</p>
+                        <p><strong>Progresso:</strong> ${((totalReceitas / metaFinanceira) * 100).toFixed(1)}%</p>
+                        <hr class="my-3">
+                        <p><strong>Total de Causas:</strong> ${processos.length}</p>
+                        <p><strong>Valor Total em Causa:</strong> ${formatarMoeda(processos.reduce((sum, p) => sum + (p.valorCausa || 0), 0))}</p>
+                    </div>
+                `,
+                width: '500px'
+            });
+            fecharModal('modalRelatorios');
+        }
+        
+        function gerarRelatorioPrazos() {
+            const hoje = new Date();
+            const prazosUrgentes = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente');
+            const prazosAtencao = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'atencao');
+            
+            Swal.fire({
+                title: 'Relatório de Prazos',
+                html: `
+                    <div class="text-left">
+                        <p class="text-red-400"><strong>⚠️ Prazos Fatais (D-2):</strong> ${prazosUrgentes.length}</p>
+                        <div class="text-sm mt-2">${prazosUrgentes.map(p => `• ${p.numero} - ${formatarData(p.proximoPrazo)}`).join('<br>') || 'Nenhum'}</div>
+                        <hr class="my-3">
+                        <p class="text-yellow-400"><strong>📅 A Vencer (D+5):</strong> ${prazosAtencao.length}</p>
+                        <div class="text-sm mt-2">${prazosAtencao.map(p => `• ${p.numero} - ${formatarData(p.proximoPrazo)}`).join('<br>') || 'Nenhum'}</div>
+                    </div>
+                `,
+                width: '500px'
+            });
+            fecharModal('modalRelatorios');
+        }
+        
+        function gerarRelatorioAudiencias() {
+            const proximasAudiencias = audiencias.filter(a => new Date(a.data) > new Date()).sort((a,b) => new Date(a.data) - new Date(b.data));
+            
+            Swal.fire({
+                title: 'Próximas Audiências',
+                html: `
+                    <div class="text-left max-h-96 overflow-y-auto">
+                        ${proximasAudiencias.map(a => {
+                            const processo = processos.find(p => p.id === a.processoId);
+                            return `
+                                <div class="mb-3 p-2 border-b">
+                                    <p><strong>${processo?.numero || 'Processo'}</strong></p>
+                                    <p>📅 ${formatarDataHora(a.data)}</p>
+                                    <p>⚖️ ${a.tipo}</p>
+                                    <p>📍 ${a.local || '—'}</p>
+                                </div>
+                            `;
+                        }).join('') || '<p>Nenhuma audiência agendada</p>'}
+                    </div>
+                `,
+                width: '500px'
+            });
+            fecharModal('modalRelatorios');
+        }
+        
+        // ==================== BACKUP ====================
+        function exportarBackup() {
+            const backup = {
+                processos, audiencias, tarefas, financeiro, modelosUsuario, feriados, metaFinanceira,
+                data: new Date().toISOString()
+            };
+            const dataStr = JSON.stringify(backup);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `advflow_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            Swal.fire('Backup criado!', 'Arquivo de backup baixado', 'success');
+        }
+        
+        function importarBackup() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const backup = JSON.parse(event.target.result);
+                        if (backup.processos) processos = backup.processos;
+                        if (backup.audiencias) audiencias = backup.audiencias;
+                        if (backup.tarefas) tarefas = backup.tarefas;
+                        if (backup.financeiro) financeiro = backup.financeiro;
+                        if (backup.modelosUsuario) modelosUsuario = backup.modelosUsuario;
+                        if (backup.feriados) feriados = backup.feriados;
+                        if (backup.metaFinanceira) metaFinanceira = backup.metaFinanceira;
+                        
+                        salvarProcessos();
+                        salvarAudiencias();
+                        salvarTarefas();
+                        salvarFinanceiro();
+                        salvarModelos();
+                        localStorage.setItem('advflow_feriados', JSON.stringify(feriados));
+                        localStorage.setItem('advflow_meta', metaFinanceira);
+                        
+                        atualizarUI();
+                        Swal.fire('Backup importado!', 'Dados restaurados com sucesso', 'success');
+                    } catch (err) {
+                        Swal.fire('Erro', 'Arquivo inválido', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+        
+        // ==================== FERIADOS ====================
+        function adicionarFeriado() {
+            const data = document.getElementById('novoFeriado').value;
+            if (data) {
+                const [ano, mes, dia] = data.split('-');
+                const dataStr = `${dia}-${mes}`;
+                if (!feriados.includes(dataStr)) {
+                    feriados.push(dataStr);
+                    localStorage.setItem('advflow_feriados', JSON.stringify(feriados));
+                    renderizarFeriados();
+                    Swal.fire('Feriado adicionado!', '', 'success');
+                } else {
+                    Swal.fire('Feriado já existe!', '', 'warning');
+                }
+            }
+        }
+        
+        function removerFeriado(feriado) {
+            feriados = feriados.filter(f => f !== feriado);
+            localStorage.setItem('advflow_feriados', JSON.stringify(feriados));
+            renderizarFeriados();
+        }
+        
+        function renderizarFeriados() {
+            const container = document.getElementById('listaFeriados');
+            if (container) {
+                container.innerHTML = feriados.map(f => `
+                    <div class="flex justify-between items-center p-2 bg-blue-900/20 rounded">
+                        <span>📅 ${f}</span>
+                        <button onclick="removerFeriado('${f}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        function salvarMetaFinanceira() {
+            const meta = parseFloat(document.getElementById('metaFinanceira').value);
+            if (meta) {
+                metaFinanceira = meta;
+                localStorage.setItem('advflow_meta', metaFinanceira);
+                document.getElementById('metaHonorarios').innerHTML = `Meta: ${formatarMoeda(metaFinanceira)}`;
+                Swal.fire('Meta salva!', '', 'success');
+            }
+        }
+        
+        // ==================== CALENDÁRIO ====================
+        function renderizarCalendario() {
+            const hoje = new Date();
+            const ano = hoje.getFullYear();
+            const mes = hoje.getMonth();
+            const primeiroDia = new Date(ano, mes, 1);
+            const ultimoDia = new Date(ano, mes + 1, 0);
+            const diasNaSemana = primeiroDia.getDay();
+            
+            const dias = [];
+            const diasSemana = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+            
+            let html = `<div class="font-bold mb-2 text-center">${new Date(ano, mes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</div>`;
+            html += `<div class="grid grid-cols-7 gap-1 mb-2">${diasSemana.map(d => `<div class="font-bold text-blue-400">${d}</div>`).join('')}</div>`;
+            html += `<div class="grid grid-cols-7 gap-1">`;
+            
+            // Dias vazios
+            for (let i = 0; i < diasSemana; i++) {
+                html += `<div class="text-gray-600 text-center py-1"></div>`;
+            }
+            
+            // Dias do mês
+            for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
+                const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+                const temEvento = audiencias.some(a => new Date(a.data).toDateString() === new Date(dataStr).toDateString());
+                const classe = temEvento ? 'has-event' : '';
+                
+                html += `<div class="calendar-day ${classe} text-center py-1 cursor-pointer" onclick="verEventosDoDia('${dataStr}')">
+                    ${dia}
+                </div>`;
+            }
+            html += `</div>`;
+            
+            const container = document.getElementById('miniCalendario');
+            if (container) container.innerHTML = html;
+        }
+        
+        function verEventosDoDia(data) {
+            const audienciasDia = audiencias.filter(a => new Date(a.data).toDateString() === new Date(data).toDateString());
+            if (audienciasDia.length === 0) {
+                Swal.fire('Sem eventos', 'Nenhuma audiência agendada para esta data', 'info');
+                return;
+            }
+            
+            Swal.fire({
+                title: `Audiências - ${formatarData(data)}`,
+                html: audienciasDia.map(a => {
+                    const processo = processos.find(p => p.id === a.processoId);
+                    return `
+                        <div class="text-left p-2 border-b">
+                            <p><strong>${processo?.numero || 'Processo'}</strong></p>
+                            <p>🕒 ${new Date(a.data).toLocaleTimeString()}</p>
+                            <p>⚖️ ${a.tipo}</p>
+                            <p>📍 ${a.local || '—'}</p>
+                        </div>
+                    `;
+                }).join(''),
+                width: '500px'
+            });
+        }
+        
+        // ==================== BI E GRÁFICOS ====================
+        let charts = {};
+        
+        function atualizarGraficos() {
+            // Status dos processos
+            const statusCount = {
+                aguardando: processos.filter(p => p.status === 'aguardando').length,
+                andamento: processos.filter(p => p.status === 'andamento').length,
+                concluido: processos.filter(p => p.status === 'concluido').length
+            };
+            
+            if (charts.status) charts.status.destroy();
+            const ctxStatus = document.getElementById('graficoStatus')?.getContext('2d');
+            if (ctxStatus) {
+                charts.status = new Chart(ctxStatus, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Aguardando', 'Em Andamento', 'Concluído'],
+                        datasets: [{ data: [statusCount.aguardando, statusCount.andamento, statusCount.concluido], backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: true }
+                });
+            }
+            
+            // Honorários mensais
+            const honorariosPorMes = {};
+            processos.forEach(p => {
+                if (p.honorarios && p.dataDistribuicao) {
+                    const mes = new Date(p.dataDistribuicao).toLocaleDateString('pt-BR', { month: 'short' });
+                    honorariosPorMes[mes] = (honorariosPorMes[mes] || 0) + p.honorarios;
+                }
+            });
+            
+            if (charts.honorarios) charts.honorarios.destroy();
+            const ctxHonorarios = document.getElementById('graficoHonorariosBI')?.getContext('2d');
+            if (ctxHonorarios) {
+                charts.honorarios = new Chart(ctxHonorarios, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(honorariosPorMes),
+                        datasets: [{ label: 'Honorários (R$)', data: Object.values(honorariosPorMes), backgroundColor: '#3b82f6' }]
+                    },
+                    options: { responsive: true }
+                });
+            }
+            
+            // Insights
+            const insights = [];
+            if (statusCount.concluido > 0) {
+                const taxaExito = (processos.filter(p => p.resultado === 'ganho').length / statusCount.concluido * 100).toFixed(1);
+                insights.push(`📊 Taxa de êxito em causas concluídas: ${taxaExito}%`);
+            }
+            const prazosUrgentes = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente').length;
+            if (prazosUrgentes > 0) insights.push(`⚠️ Atenção! ${prazosUrgentes} processo(s) com prazo fatal`);
+            const totalHonorarios = processos.reduce((sum, p) => sum + (p.honorarios || 0), 0);
+            insights.push(`💰 Previsão de honorários: ${formatarMoeda(totalHonorarios)}`);
+            
+            const container = document.getElementById('insightsContainer');
+            if (container) {
+                container.innerHTML = insights.map(i => `<div class="p-2 bg-blue-900/20 rounded">${i}</div>`).join('');
+            }
+        }
+        
+        function atualizarGraficoHonorariosModal() {
+            const receitas = financeiro.reduce((sum, f) => sum + f.valor, 0);
+            const pendentes = processos.filter(p => p.status !== 'concluido').reduce((sum, p) => sum + (p.honorarios || 0), 0);
+            
+            document.getElementById('financeiroTotal').innerText = formatarMoeda(receitas);
+            document.getElementById('financeiroPendente').innerText = formatarMoeda(pendentes);
+            
+            const ctx = document.getElementById('graficoHonorarios')?.getContext('2d');
+            if (ctx) {
+                if (window.graficoHonorariosModal) window.graficoHonorariosModal.destroy();
+                window.graficoHonorariosModal = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Recebido', 'Pendente'],
+                        datasets: [{ data: [receitas, pendentes], backgroundColor: ['#10b981', '#f59e0b'] }]
+                    }
+                });
+            }
+            
+            const lista = document.getElementById('listaFinanceiro');
+            if (lista) {
+                lista.innerHTML = financeiro.sort((a,b) => new Date(b.data) - new Date(a.data)).slice(0,10).map(f => `
+                    <div class="flex justify-between items-center p-2 glass-card rounded">
+                        <div>
+                            <span class="text-green-400">+ ${formatarMoeda(f.valor)}</span>
+                            <p class="text-xs text-gray-500">${formatarData(f.data)}</p>
+                        </div>
+                        <div class="text-sm">${f.processo || '—'}</div>
+                    </div>
+                `).join('');
+                if (financeiro.length === 0) lista.innerHTML = '<div class="text-center text-gray-500">Nenhum registro financeiro</div>';
+            }
+        }
+        
+        // ==================== UI PRINCIPAL ====================
+        function atualizarUI() {
+            // Data e hora
+            const agora = new Date();
+            document.getElementById('dataAtual').innerText = agora.toLocaleDateString('pt-BR');
+            document.getElementById('horaAtual').innerText = agora.toLocaleTimeString('pt-BR');
+            
+            // Métricas
+            const processosAtivos = processos.filter(p => p.status !== 'concluido').length;
+            const prazosFataisCount = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente').length;
+            const audienciasHoje = audiencias.filter(a => new Date(a.data).toDateString() === new Date().toDateString()).length;
+            const honorariosMes = processos.filter(p => p.dataDistribuicao && new Date(p.dataDistribuicao).getMonth() === new Date().getMonth())
+                .reduce((sum, p) => sum + (p.honorarios || 0), 0);
+            const processosGanhos = processos.filter(p => p.resultado === 'ganho').length;
+            const taxaExito = processos.filter(p => p.resultado).length > 0 ? 
+                Math.round((processosGanhos / processos.filter(p => p.resultado).length) * 100) : 0;
+            const valorCausaTotal = processos.reduce((sum, p) => sum + (p.valorCausa || 0), 0);
+            const valorMedio = processos.length > 0 ? valorCausaTotal / processos.length : 0;
+            const tarefasPendentes = tarefas.filter(t => !t.concluida).length;
+            const tarefasHojeCount = tarefas.filter(t => !t.concluida && new Date(t.prazo).toDateString() === new Date().toDateString()).length;
+            
+            document.getElementById('totalProcessos').innerText = processos.length;
+            document.getElementById('processosAtivos').innerText = processosAtivos;
+            document.getElementById('prazosFatais').innerText = prazosFataisCount;
+            document.getElementById('audienciasHoje').innerText = audienciasHoje;
+            document.getElementById('honorariosMes').innerText = formatarMoeda(honorariosMes);
+            document.getElementById('taxaExito').innerText = `${taxaExito}%`;
+            document.getElementById('processosGanhos').innerText = processosGanhos;
+            document.getElementById('valorCausaTotal').innerText = formatarMoeda(valorCausaTotal);
+            document.getElementById('valorMedio').innerText = formatarMoeda(valorMedio);
+            document.getElementById('tarefasPendentes').innerText = tarefasPendentes;
+            document.getElementById('tarefasHoje').innerText = tarefasHojeCount;
+            document.getElementById('totalDocumentos').innerText = modelosUsuario.length;
+            document.getElementById('totalModelos').innerText = Object.keys(modelosProntos).length;
+            
+            const proximoPrazoFatal = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente')
+                .sort((a,b) => new Date(a.proximoPrazo) - new Date(b.proximoPrazo))[0];
+            document.getElementById('proximoPrazoFatal').innerHTML = proximoPrazoFatal ? `${formatarData(proximoPrazoFatal.proximoPrazo)}<br><small>${proximoPrazoFatal.numero}</small>` : '—';
+            
+            const proximaAudiencia = audiencias.filter(a => new Date(a.data) > new Date())
+                .sort((a,b) => new Date(a.data) - new Date(b.data))[0];
+            if (proximaAudiencia) {
+                const processo = processos.find(p => p.id === proximaAudiencia.processoId);
+                document.getElementById('proximaAudiencia').innerHTML = `${formatarDataHora(proximaAudiencia.data)}<br><small>${processo?.numero || 'Processo'}</small>`;
+            } else {
+                document.getElementById('proximaAudiencia').innerHTML = '—';
+            }
+            
+            // Kanban
+            ['aguardando', 'andamento', 'concluido'].forEach(status => {
+                const container = document.getElementById(`kanban-${status}`);
+                if (container) {
+                    const processosStatus = processos.filter(p => p.status === status);
+                    const countId = `count${status.charAt(0).toUpperCase() + status.slice(1)}`;
+                    if (document.getElementById(countId)) {
+                        document.getElementById(countId).innerText = processosStatus.length;
+                    }
+                    container.innerHTML = processosStatus.map(p => `
+                        <div class="process-card rounded-lg p-3 mb-2" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', ${p.id})">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex-1">
+                                    <p class="font-bold text-sm">${p.numero}</p>
+                                    <p class="text-xs text-gray-400">${p.cliente}</p>
+                                    ${p.valorCausa ? `<p class="text-xs text-green-400 mt-1">${formatarMoeda(p.valorCausa)}</p>` : ''}
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="editarProcesso(${p.id})" class="text-blue-400 hover:text-blue-300"><i class="fas fa-edit text-xs"></i></button>
+                                    <button onclick="excluirProcesso(${p.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash text-xs"></i></button>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex justify-between items-center text-xs">
+                                ${p.proximoPrazo ? `<span class="${getStatusPrazo(p.proximoPrazo) === 'urgente' ? 'text-red-400 font-bold animate-pulse' : 'text-gray-400'}">
+                                    <i class="far fa-calendar-alt mr-1"></i>${formatarData(p.proximoPrazo)}
+                                </span>` : '<span class="text-gray-500">Sem prazo</span>'}
+                                <select onchange="atualizarStatusProcesso(${p.id}, this.value)" class="bg-transparent border border-gray-700 rounded px-1 py-0 text-xs">
+                                    <option value="aguardando" ${p.status === 'aguardando' ? 'selected' : ''}>Aguardando</option>
+                                    <option value="andamento" ${p.status === 'andamento' ? 'selected' : ''}>Andamento</option>
+                                    <option value="concluido" ${p.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+                                </select>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            });
+            
+            // Configurar drop zones
+            ['kanban-aguardando', 'kanban-andamento', 'kanban-concluidos'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.ondragover = (e) => e.preventDefault();
+                    el.ondrop = (e) => {
+                        e.preventDefault();
+                        const id = parseInt(e.dataTransfer.getData('text/plain'));
+                        const status = id === 'kanban-aguardando' ? 'aguardando' : (id === 'kanban-andamento' ? 'andamento' : 'concluido');
+                        atualizarStatusProcesso(id, status);
+                    };
+                }
+            });
+            
+            // Lista de Audiências
+            const proximasAudiencias = audiencias.filter(a => new Date(a.data) > new Date())
+                .sort((a,b) => new Date(a.data) - new Date(b.data)).slice(0,5);
+            const audienciasHtml = proximasAudiencias.map(a => {
+                const processo = processos.find(p => p.id === a.processoId);
+                const isHoje = new Date(a.data).toDateString() === new Date().toDateString();
+                return `
+                    <div class="bg-blue-900/20 rounded p-2 text-sm ${isHoje ? 'border-l-2 border-purple-400' : ''}">
+                        <div class="flex justify-between">
+                            <span class="font-semibold">${processo?.numero || 'Processo'}</span>
+                            <span class="text-purple-300 text-xs">${a.tipo}</span>
+                        </div>
+                        <div class="text-xs text-gray-300 mt-1">
+                            <i class="far fa-calendar-alt mr-1"></i>${formatarDataHora(a.data)}
+                        </div>
+                        <div class="text-xs text-gray-400"><i class="fas fa-map-marker-alt mr-1"></i>${a.local || '—'}</div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('listaAudiencias').innerHTML = audienciasHtml || '<div class="text-center text-gray-500 py-4">Nenhuma audiência agendada</div>';
+            
+            // Lista de Tarefas
+            const tarefasPendentesList = tarefas.filter(t => !t.concluida && new Date(t.prazo) >= new Date()).slice(0,10);
+            const tarefasHtml = tarefasPendentesList.map(t => {
+                const isHoje = new Date(t.prazo).toDateString() === new Date().toDateString();
+                return `
+                    <div class="flex justify-between items-center p-2 glass-card rounded ${isHoje ? 'border-l-2 border-cyan-400' : ''}">
+                        <div class="flex-1">
+                            <span class="text-sm ${t.prioridade === 'Alta' ? 'text-red-400 font-bold' : ''}">${t.descricao}</span>
+                            <p class="text-xs text-gray-500">${formatarDataHora(t.prazo)}</p>
+                        </div>
+                        <button onclick="concluirTarefa(${t.id})" class="text-green-400 hover:text-green-300 mx-1"><i class="fas fa-check-circle"></i></button>
+                        <button onclick="excluirTarefa(${t.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-times-circle"></i></button>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('listaTarefas').innerHTML = tarefasHtml || '<div class="text-center text-gray-500 py-4">Nenhuma tarefa pendente</div>';
+            
+            // Tabela de Processos com filtros
+            let processosFiltrados = [...processos];
+            const busca = document.getElementById('buscaProcessos')?.value.toLowerCase();
+            if (busca) {
+                processosFiltrados = processosFiltrados.filter(p => 
+                    p.numero.toLowerCase().includes(busca) || 
+                    p.cliente.toLowerCase().includes(busca) ||
+                    (p.parteContraria && p.parteContraria.toLowerCase().includes(busca))
+                );
+            }
+            const statusFiltro = document.getElementById('filtroStatus')?.value;
+            if (statusFiltro && statusFiltro !== 'todos') {
+                processosFiltrados = processosFiltrados.filter(p => p.status === statusFiltro);
+            }
+            const urgenciaFiltro = document.getElementById('filtroUrgencia')?.value;
+            if (urgenciaFiltro && urgenciaFiltro !== 'todos') {
+                processosFiltrados = urgenciaFiltro === 'urgente' ? 
+                    processosFiltrados.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente') :
+                    processosFiltrados.filter(p => !p.proximoPrazo || getStatusPrazo(p.proximoPrazo) !== 'urgente');
+            }
+            
+            const tbody = document.getElementById('listaProcessos');
+            if (tbody) {
+                tbody.innerHTML = processosFiltrados.map(p => {
+                    const audiencia = audiencias.find(a => a.processoId === p.id && new Date(a.data) > new Date());
+                    return `
+                        <tr class="hover:bg-blue-900/20 transition cursor-pointer" onclick="editarProcesso(${p.id})">
+                            <td class="p-3 text-sm font-mono">${p.numero}</td>
+                            <td class="p-3 text-sm">${p.cliente}</td>
+                            <td class="p-3 text-sm">${p.parteContraria || '—'}</td>
+                            <td class="p-3 text-sm">${formatarMoeda(p.valorCausa)}</td>
+                            <td class="p-3 text-sm"><span class="${getStatusPrazo(p.proximoPrazo) === 'urgente' ? 'text-red-400 font-bold' : 'text-gray-400'}">${formatarData(p.proximoPrazo)}</span></td>
+                            <td class="p-3 text-sm">${audiencia ? formatarDataHora(audiencia.data) : '—'}</td>
+                            <td class="p-3">
+                                <span class="px-2 py-1 rounded-full text-xs ${p.status === 'concluido' ? 'bg-green-500/20 text-green-300' : (p.status === 'andamento' ? 'bg-blue-500/20 text-blue-300' : 'bg-yellow-500/20 text-yellow-300')}">
+                                    ${p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Em Andamento' : 'Concluído')}
+                                </span>
+                            </td>
+                            <td class="p-3">
+                                <button onclick="event.stopPropagation(); editarProcesso(${p.id})" class="text-blue-400 hover:text-blue-300 mx-1"><i class="fas fa-edit"></i></button>
+                                <button onclick="event.stopPropagation(); excluirProcesso(${p.id})" class="text-red-400 hover:text-red-300 mx-1"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                if (processosFiltrados.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-gray-500">Nenhum processo encontrado</td></tr>';
+                }
+            }
+            
+            // Atualizar selects
+            const selectProcessos = document.getElementById('audienciaProcesso');
+            if (selectProcessos) {
+                selectProcessos.innerHTML = processos.filter(p => p.status !== 'concluido')
+                    .map(p => `<option value="${p.id}">${p.numero} - ${p.cliente}</option>`).join('');
+            }
+            const selectPeticao = document.getElementById('peticaoProcesso');
+            if (selectPeticao) {
+                selectPeticao.innerHTML = `<option value="">Selecione um processo</option>` + 
+                    processos.map(p => `<option value="${p.id}">${p.numero} - ${p.cliente}</option>`).join('');
+            }
+            const selectTarefa = document.getElementById('tarefaProcesso');
+            if (selectTarefa) {
+                selectTarefa.innerHTML = `<option value="">Nenhum</option>` +
+                    processos.map(p => `<option value="${p.id}">${p.numero} - ${p.cliente}</option>`).join('');
+            }
+            
+            // Atualizar modelos
+            const listaModelosUsuario = document.getElementById('listaModelosUsuario');
+            if (listaModelosUsuario) {
+                listaModelosUsuario.innerHTML = modelosUsuario.map(m => `
+                    <div class="flex justify-between items-center p-2 glass-card rounded">
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold">${m.nome}</p>
+                            <p class="text-xs text-gray-500">${formatarData(m.data)}</p>
+                        </div>
+                        <button onclick="usarModelo(${m.id})" class="text-blue-400 hover:text-blue-300 mx-1"><i class="fas fa-file-alt"></i></button>
+                        <button onclick="excluirModelo(${m.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                    </div>
+                `).join('');
+                if (modelosUsuario.length === 0) listaModelosUsuario.innerHTML = '<div class="text-center text-gray-500">Nenhum modelo salvo</div>';
+            }
+            
+            const listaModelosProntos = document.getElementById('listaModelosProntos');
+            if (listaModelosProntos) {
+                listaModelosProntos.innerHTML = Object.entries(modelosProntos).map(([key, value]) => `
+                    <div class="flex justify-between items-center p-2 glass-card rounded">
+                        <div>
+                            <p class="text-sm font-semibold">${key === 'inicial' ? 'Petição Inicial' : (key === 'contestacao' ? 'Contestação' : (key === 'recurso' ? 'Recurso de Apelação' : 'Embargos de Declaração'))}</p>
+                            <p class="text-xs text-gray-500">Modelo padrão</p>
+                        </div>
+                        <button onclick="usarModeloPronto('${key}')" class="text-green-400 hover:text-green-300"><i class="fas fa-download"></i></button>
+                    </div>
+                `).join('');
+            }
+            
+            // Calendário e gráficos
+            renderizarCalendario();
+            atualizarNotificacoes();
+            
+            if (document.getElementById('modalBI') && document.getElementById('modalBI').classList.contains('flex')) {
+                atualizarGraficos();
+            }
+            if (document.getElementById('modalHonorarios') && document.getElementById('modalHonorarios').classList.contains('flex')) {
+                atualizarGraficoHonorariosModal();
+            }
+        }
+        
+        function usarModelo(id) {
+            const modelo = modelosUsuario.find(m => m.id === id);
+            if (modelo) {
+                document.getElementById('peticaoConteudo').value = modelo.conteudo;
+                abrirModal('modalPeticao');
+                Swal.fire('Modelo carregado!', '', 'success');
+            }
+        }
+        
+        function usarModeloPronto(key) {
+            document.getElementById('peticaoConteudo').value = modelosProntos[key];
+            document.getElementById('peticaoModelo').value = key;
+            abrirModal('modalPeticao');
+            Swal.fire('Modelo carregado!', '', 'success');
+        }
+        
+        function excluirModelo(id) {
+            modelosUsuario = modelosUsuario.filter(m => m.id !== id);
+            salvarModelos();
+            atualizarUI();
+        }
+        
+        function importarModelo() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.txt,.md';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    Swal.fire({
+                        title: 'Nome do modelo',
+                        input: 'text',
+                        inputLabel: 'Digite um nome para o modelo',
+                        showCancelButton: true
+                    }).then((result) => {
+                        if (result.value) {
+                            modelosUsuario.push({
+                                id: Date.now(),
+                                nome: result.value,
+                                conteudo: event.target.result,
+                                data: new Date().toISOString()
+                            });
+                            salvarModelos();
+                            atualizarUI();
+                            Swal.fire('Modelo importado!', '', 'success');
+                        }
+                    });
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+        
+        function buscarJurisprudencia() {
+            Swal.fire({
+                title: 'Buscar Jurisprudência',
+                html: `
+                    <input id="buscaJuris" class="swal2-input" placeholder="Termo para busca...">
+                    <select id="tribunal" class="swal2-select">
+                        <option value="STJ">STJ</option>
+                        <option value="STF">STF</option>
+                        <option value="TJSP">TJSP</option>
+                    </select>
+                `,
+                preConfirm: () => {
+                    const termo = document.getElementById('buscaJuris').value;
+                    if (!termo) Swal.showValidationMessage('Digite um termo');
+                    return termo;
+                }
+            }).then((result) => {
+                if (result.value) {
+                    Swal.fire('Funcionalidade em desenvolvimento', 'Integração com APIs jurídicas em breve', 'info');
+                }
+            });
+        }
+        
+        // ==================== MODAIS ====================
+        function abrirModalProcesso() {
+            document.getElementById('modalTitulo').innerText = 'Novo Processo';
+            document.getElementById('formProcesso').reset();
+            document.getElementById('processoId').value = '';
+            abrirModal('modalProcesso');
+        }
+        
+        function abrirModalAudiencia() { abrirModal('modalAudiencia'); }
+        function abrirModalPeticao() { 
+            document.getElementById('peticaoModelo').value = '';
+            document.getElementById('peticaoConteudo').value = '';
+            abrirModal('modalPeticao'); 
+        }
+        function abrirModalTarefa() { abrirModal('modalTarefa'); }
+        function abrirModalHonorarios() { 
+            atualizarGraficoHonorariosModal();
+            abrirModal('modalHonorarios'); 
+        }
+        function abrirModalRelatorios() { abrirModal('modalRelatorios'); }
+        function abrirModalDocumentos() { 
+            atualizarUI();
+            abrirModal('modalDocumentos'); 
+        }
+        function abrirConfiguracoes() { 
+            renderizarFeriados();
+            document.getElementById('metaFinanceira').value = metaFinanceira;
+            abrirModal('modalConfig'); 
+        }
+        function abrirPainelBI() { 
+            atualizarGraficos();
+            abrirModal('modalBI'); 
+        }
+        function abrirModelos() { abrirModal('modalDocumentos'); }
+        
+        function filtrarKanban(tipo) {
+            // Implementar se necessário
+        }
+        
+        // Event listeners
+        document.getElementById('formProcesso')?.addEventListener('submit', salvarProcesso);
+        document.getElementById('formAudiencia')?.addEventListener('submit', salvarAudiencia);
+        document.getElementById('formPeticao')?.addEventListener('submit', salvarPeticao);
+        document.getElementById('formTarefa')?.addEventListener('submit', salvarTarefa);
+        
+        document.getElementById('buscaProcessos')?.addEventListener('input', () => atualizarUI());
+        document.getElementById('filtroStatus')?.addEventListener('change', () => atualizarUI());
+        document.getElementById('filtroUrgencia')?.addEventListener('change', () => atualizarUI());
+        
+        // Fechar modais clicando fora
+        window.onclick = function(event) {
+            if (event.target.classList.contains('fixed') && event.target.classList.contains('bg-black/80')) {
+                event.target.classList.add('hidden');
+                event.target.classList.remove('flex');
+            }
+        };
+        
+        // Relógio
+        setInterval(() => {
+            const agora = new Date();
+            document.getElementById('horaAtual').innerText = agora.toLocaleTimeString('pt-BR');
+        }, 1000);
+        
+        // Verificações periódicas
+        setInterval(() => verificarPrazosEAudiencias(), 3600000);
+        
+        // Inicialização
+        carregarDados();
+    </script>
+</body>
+</html>
