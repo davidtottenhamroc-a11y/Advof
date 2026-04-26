@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
@@ -184,7 +186,7 @@
         }
         
         [data-tooltip]:hover:before {
-            display: block;
+            display: none;
         }
         
         @keyframes fadeIn {
@@ -221,6 +223,21 @@
                 opacity: 1;
             }
         }
+        
+        /* Loading spinner */
+        .loader {
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #3b82f6;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -234,7 +251,7 @@
                     </div>
                     <div>
                         <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">AdvFlow Pro</h1>
-                        <p class="text-xs text-gray-400">Sistema Jurídico Inteligente - V2.0</p>
+                        <p class="text-xs text-gray-400">Sistema Jurídico Inteligente - V3.0</p>
                     </div>
                 </div>
                 
@@ -386,7 +403,6 @@
 
         <!-- Painel Principal: Kanban + Calendário -->
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Kanban (3 colunas) - CORRIGIDO -->
             <div class="lg:col-span-3 fade-in">
                 <div class="flex justify-between items-center mb-3">
                     <h2 class="text-lg font-bold flex items-center gap-2">
@@ -401,7 +417,6 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Aguardando -->
                     <div class="kanban-column p-3" data-status="aguardando">
                         <div class="flex justify-between items-center mb-3">
                             <h3 class="font-bold"><i class="fas fa-hourglass-half mr-2 text-yellow-400"></i>Aguardando</h3>
@@ -409,7 +424,6 @@
                         </div>
                         <div id="kanban-aguardando" class="space-y-3 min-h-[400px]" data-status="aguardando"></div>
                     </div>
-                    <!-- Em Andamento -->
                     <div class="kanban-column p-3" data-status="andamento">
                         <div class="flex justify-between items-center mb-3">
                             <h3 class="font-bold"><i class="fas fa-spinner mr-2 text-blue-400"></i>Em Andamento</h3>
@@ -417,7 +431,6 @@
                         </div>
                         <div id="kanban-andamento" class="space-y-3 min-h-[400px]" data-status="andamento"></div>
                     </div>
-                    <!-- Concluídos - CORRIGIDO -->
                     <div class="kanban-column p-3" data-status="concluido">
                         <div class="flex justify-between items-center mb-3">
                             <h3 class="font-bold"><i class="fas fa-check-circle mr-2 text-green-400"></i>Concluídos</h3>
@@ -428,7 +441,6 @@
                 </div>
             </div>
             
-            <!-- Calendário e Tarefas -->
             <div class="space-y-4 fade-in">
                 <div class="glass-card rounded-xl p-4">
                     <h3 class="font-bold mb-3"><i class="fas fa-calendar-alt text-blue-400 mr-2"></i>Calendário</h3>
@@ -471,8 +483,8 @@
                             <option value="andamento">Em Andamento</option>
                             <option value="concluido">Concluído</option>
                         </select>
-                        <button onclick="exportarPDF()" class="bg-red-600/30 hover:bg-red-600/50 rounded-lg text-sm px-3 py-1.5 transition">
-                            <i class="fas fa-file-pdf mr-1"></i>PDF
+                        <button onclick="gerarPDFCompleto()" class="bg-red-600/30 hover:bg-red-600/50 rounded-lg text-sm px-3 py-1.5 transition flex items-center gap-1">
+                            <i class="fas fa-file-pdf mr-1"></i>PDF Completo
                         </button>
                     </div>
                 </div>
@@ -497,9 +509,7 @@
         </div>
     </div>
 
-    <!-- MODAIS (mantidos da versão anterior, mas com correções) -->
-    
-    <!-- Modal Processo -->
+    <!-- MODAIS -->
     <div id="modalProcesso" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 overflow-y-auto">
         <div class="modal-glass rounded-2xl w-full max-w-4xl mx-4 my-8">
             <div class="p-6 border-b border-blue-800/50 flex justify-between items-center">
@@ -521,7 +531,7 @@
                     <div><label class="block text-sm font-medium mb-2">Status</label><select id="status" class="input-modern w-full"><option value="aguardando">Aguardando</option><option value="andamento">Em Andamento</option><option value="concluido">Concluído</option></select></div>
                     <div class="md:col-span-2"><label class="block text-sm font-medium mb-2">Próximo Prazo</label><input type="date" id="proximoPrazo" class="input-modern w-full"></div>
                     <div class="md:col-span-2"><label class="block text-sm font-medium mb-2">Observações</label><textarea id="observacoes" rows="3" class="input-modern w-full"></textarea></div>
-                    <div class="md:col-span-2"><label class="block text-sm font-medium mb-2">Resultado (se concluído)</label><select id="resultado" class="input-modern w-full"><option value="">Selecione...</option><option value="ganho">Ganho</option><option value="perdido">Perdido</option><option value="acordo">Acordo</option></select></div>
+                    <div class="md:col-span-2"><label class="block text-sm font-medium mb-2">Resultado</label><select id="resultado" class="input-modern w-full"><option value="">Selecione...</option><option value="ganho">Ganho</option><option value="perdido">Perdido</option><option value="acordo">Acordo</option></select></div>
                 </div>
                 <div class="flex gap-3 mt-6">
                     <button type="submit" class="flex-1 btn-primary py-2 rounded-lg transition">Salvar Processo</button>
@@ -531,7 +541,6 @@
         </div>
     </div>
 
-    <!-- Modal Audiência -->
     <div id="modalAudiencia" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
         <div class="modal-glass rounded-2xl w-full max-w-md mx-4">
             <div class="p-6 border-b border-blue-800/50 flex justify-between">
@@ -541,14 +550,13 @@
             <form id="formAudiencia" class="p-6 space-y-4">
                 <div><label class="block text-sm mb-2">Processo *</label><select id="audienciaProcesso" required class="input-modern w-full"></select></div>
                 <div><label class="block text-sm mb-2">Data e Hora *</label><input type="datetime-local" id="audienciaData" required class="input-modern w-full"></div>
-                <div><label class="block text-sm mb-2">Tipo</label><select id="audienciaTipo" class="input-modern w-full"><option>Instrução e Julgamento</option><option>Conciliação</option><option>Mediação</option><option>Testemunhas</option></select></div>
+                <div><label class="block text-sm mb-2">Tipo</label><select id="audienciaTipo" class="input-modern w-full"><option>Instrução</option><option>Conciliação</option><option>Julgamento</option></select></div>
                 <div><label class="block text-sm mb-2">Local</label><input type="text" id="audienciaLocal" class="input-modern w-full"></div>
                 <button type="submit" class="w-full btn-primary py-2 rounded-lg transition">Agendar</button>
             </form>
         </div>
     </div>
 
-    <!-- Modal Petição -->
     <div id="modalPeticao" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
         <div class="modal-glass rounded-2xl w-full max-w-3xl mx-4">
             <div class="p-6 border-b border-blue-800/50 flex justify-between">
@@ -557,7 +565,6 @@
             </div>
             <form id="formPeticao" class="p-6 space-y-4">
                 <div><label class="block text-sm mb-2">Processo</label><select id="peticaoProcesso" class="input-modern w-full"></select></div>
-                <div><label class="block text-sm mb-2">Tipo de Petição</label><select id="peticaoTipo" class="input-modern w-full"><option>Manifestação</option><option>Contestação</option><option>Recurso</option><option>Embargos</option></select></div>
                 <div><label class="block text-sm mb-2">Conteúdo</label><textarea id="peticaoConteudo" rows="8" class="input-modern w-full"></textarea></div>
                 <div class="flex gap-3">
                     <button type="button" onclick="gerarPeticaoPreview()" class="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg transition">Pré-visualizar</button>
@@ -567,7 +574,6 @@
         </div>
     </div>
 
-    <!-- Modal Tarefa -->
     <div id="modalTarefa" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
         <div class="modal-glass rounded-2xl w-full max-w-md mx-4">
             <div class="p-6 border-b border-blue-800/50 flex justify-between">
@@ -583,7 +589,6 @@
         </div>
     </div>
 
-    <!-- Modal Honorários -->
     <div id="modalHonorarios" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
         <div class="modal-glass rounded-2xl w-full max-w-2xl mx-4">
             <div class="p-6 border-b border-blue-800/50 flex justify-between">
@@ -597,7 +602,6 @@
         </div>
     </div>
 
-    <!-- Modal Relatórios -->
     <div id="modalRelatorios" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
         <div class="modal-glass rounded-2xl w-full max-w-md mx-4">
             <div class="p-6 border-b border-blue-800/50 flex justify-between">
@@ -605,15 +609,25 @@
                 <button onclick="fecharModal('modalRelatorios')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
             </div>
             <div class="p-6 space-y-3">
-                <button onclick="gerarRelatorioProcessos()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition">📊 Relatório de Processos</button>
-                <button onclick="gerarRelatorioFinanceiro()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition">💰 Relatório Financeiro</button>
-                <button onclick="gerarRelatorioPrazos()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition">⚠️ Relatório de Prazos</button>
-                <button onclick="gerarRelatorioAudiencias()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition">⚖️ Relatório de Audiências</button>
+                <button onclick="gerarPDFCompleto()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition">
+                    <i class="fas fa-file-pdf text-red-400 mr-2"></i>📊 Relatório Completo (PDF)
+                </button>
+                <button onclick="gerarPDFFinanceiro()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition">
+                    <i class="fas fa-chart-line text-green-400 mr-2"></i>💰 Relatório Financeiro
+                </button>
+                <button onclick="gerarPDFPrazos()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition">
+                    <i class="fas fa-hourglass-half text-yellow-400 mr-2"></i>⚠️ Relatório de Prazos
+                </button>
+                <button onclick="gerarPDFAudiencias()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition">
+                    <i class="fas fa-gavel text-purple-400 mr-2"></i>⚖️ Relatório de Audiências
+                </button>
+                <button onclick="gerarPDFProcessoIndividual()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition">
+                    <i class="fas fa-file-alt text-blue-400 mr-2"></i>📄 Relatório Individual
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Documentos -->
     <div id="modalDocumentos" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
         <div class="modal-glass rounded-2xl w-full max-w-2xl mx-4">
             <div class="p-6 border-b border-blue-800/50 flex justify-between">
@@ -627,7 +641,6 @@
         </div>
     </div>
 
-    <!-- Modal Configurações -->
     <div id="modalConfig" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50">
         <div class="modal-glass rounded-2xl w-full max-w-md mx-4">
             <div class="p-6 border-b border-blue-800/50 flex justify-between">
@@ -642,7 +655,6 @@
         </div>
     </div>
 
-    <!-- Modal BI -->
     <div id="modalBI" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 overflow-y-auto">
         <div class="modal-glass rounded-2xl w-full max-w-4xl mx-4 my-8">
             <div class="p-6 border-b border-blue-800/50 flex justify-between">
@@ -713,25 +725,499 @@
             }
         }
 
-        function addNotificacao(mensagem, tipo = 'info') {
-            // Criar toast notification
-            const toast = document.createElement('div');
-            toast.className = `toast-notification glass-card rounded-lg p-3 mb-2 animate-slide-in`;
-            toast.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <i class="fas ${tipo === 'urgente' ? 'fa-exclamation-triangle text-red-400' : 'fa-info-circle text-blue-400'}"></i>
-                    <span class="text-sm">${mensagem}</span>
-                </div>
-            `;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 5000);
+        // ==================== GERADOR DE PDF PROFISSIONAL ====================
+        async function gerarPDFCompleto() {
+            Swal.fire({
+                title: 'Gerando PDF...',
+                html: '<div class="loader mx-auto"></div>',
+                showConfirmButton: false,
+                allowOutsideClick: false
+            });
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ 
+                orientation: 'landscape', 
+                unit: 'mm', 
+                format: 'a4',
+                compress: true
+            });
             
-            console.log(`[${tipo.toUpperCase()}] ${mensagem}`);
+            // Configurações de cor (tema azul escuro)
+            const primaryColor = [27, 55, 96]; // #1b3760
+            const secondaryColor = [59, 130, 246]; // #3b82f6
+            const accentColor = [16, 185, 129]; // #10b981
+            
+            // Função para adicionar cabeçalho
+            function addHeader(doc, titulo) {
+                // Gradiente no topo
+                doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                doc.rect(0, 0, doc.internal.pageSize.getWidth(), 40, 'F');
+                
+                // Logo e título
+                doc.setFontSize(24);
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.text('⚖️ AdvFlow Pro', 20, 20);
+                
+                doc.setFontSize(10);
+                doc.setTextColor(200, 200, 200);
+                doc.text('Sistema Jurídico Inteligente', 20, 30);
+                
+                // Data do relatório
+                doc.setFontSize(9);
+                doc.setTextColor(180, 180, 180);
+                doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, doc.internal.pageSize.getWidth() - 50, 15);
+                doc.text(`Relatório: ${titulo}`, doc.internal.pageSize.getWidth() - 50, 25);
+                
+                // Linha decorativa
+                doc.setDrawColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+                doc.setLineWidth(0.5);
+                doc.line(20, 38, doc.internal.pageSize.getWidth() - 20, 38);
+            }
+            
+            // Função para adicionar rodapé
+            function addFooter(doc) {
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(128, 128, 128);
+                    doc.text(
+                        `AdvFlow Pro - Relatório Gerado em ${new Date().toLocaleDateString('pt-BR')} - Página ${i} de ${pageCount}`,
+                        doc.internal.pageSize.getWidth() / 2,
+                        doc.internal.pageSize.getHeight() - 10,
+                        { align: 'center' }
+                    );
+                }
+            }
+            
+            // Página 1: Resumo Executivo
+            addHeader(doc, 'Resumo Executivo');
+            
+            // Cards de métricas
+            const totalProcessos = processos.length;
+            const ativos = processos.filter(p => p.status !== 'concluido').length;
+            const concluidos = processos.filter(p => p.status === 'concluido').length;
+            const urgentes = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente').length;
+            const honorariosTotal = processos.reduce((sum, p) => sum + (p.honorarios || 0), 0);
+            const recebido = financeiro.reduce((sum, f) => sum + f.valor, 0);
+            const ganhos = processos.filter(p => p.resultado === 'ganho').length;
+            const taxaExito = concluidos > 0 ? Math.round((ganhos / concluidos) * 100) : 0;
+            
+            let y = 55;
+            
+            // Grid de métricas
+            const metrics = [
+                { label: 'Total de Processos', value: totalProcessos, icon: '📋', color: secondaryColor },
+                { label: 'Processos Ativos', value: ativos, icon: '🔄', color: secondaryColor },
+                { label: 'Concluídos', value: concluidos, icon: '✅', color: accentColor },
+                { label: 'Prazos Fatais', value: urgentes, icon: '⚠️', color: [220, 38, 38] }
+            ];
+            
+            metrics.forEach((metric, idx) => {
+                const x = 20 + (idx * 65);
+                doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                doc.roundedRect(x, y, 55, 35, 3, 3, 'F');
+                doc.setFontSize(20);
+                doc.setTextColor(metric.color[0], metric.color[1], metric.color[2]);
+                doc.text(metric.icon, x + 5, y + 12);
+                doc.setFontSize(20);
+                doc.setTextColor(255, 255, 255);
+                doc.text(metric.value.toString(), x + 5, y + 28);
+                doc.setFontSize(8);
+                doc.setTextColor(180, 180, 180);
+                doc.text(metric.label, x + 5, y + 33);
+            });
+            
+            y += 50;
+            
+            // Segunda linha de métricas
+            const metrics2 = [
+                { label: 'Honorários Totais', value: formatarMoeda(honorariosTotal), icon: '💰', color: [16, 185, 129] },
+                { label: 'Recebido', value: formatarMoeda(recebido), icon: '💵', color: [16, 185, 129] },
+                { label: 'Taxa de Êxito', value: `${taxaExito}%`, icon: '🏆', color: [245, 158, 11] },
+                { label: 'Audiências Hoje', value: audiencias.filter(a => new Date(a.data).toDateString() === new Date().toDateString()).length, icon: '⚖️', color: [139, 92, 246] }
+            ];
+            
+            metrics2.forEach((metric, idx) => {
+                const x = 20 + (idx * 65);
+                doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                doc.roundedRect(x, y, 55, 35, 3, 3, 'F');
+                doc.setFontSize(20);
+                doc.setTextColor(metric.color[0], metric.color[1], metric.color[2]);
+                doc.text(metric.icon, x + 5, y + 12);
+                doc.setFontSize(12);
+                doc.setTextColor(255, 255, 255);
+                doc.text(metric.value.toString(), x + 5, y + 28);
+                doc.setFontSize(8);
+                doc.setTextColor(180, 180, 180);
+                doc.text(metric.label, x + 5, y + 33);
+            });
+            
+            // Tabela de Processos por Status
+            y += 55;
+            doc.setFontSize(14);
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.text('📊 Distribuição por Status', 20, y);
+            
+            y += 10;
+            const statusData = [
+                ['Aguardando', processos.filter(p => p.status === 'aguardando').length],
+                ['Em Andamento', processos.filter(p => p.status === 'andamento').length],
+                ['Concluídos', processos.filter(p => p.status === 'concluido').length]
+            ];
+            
+            doc.autoTable({
+                startY: y,
+                head: [['Status', 'Quantidade', 'Percentual']],
+                body: statusData.map(s => [s[0], s[1], totalProcessos > 0 ? `${Math.round((s[1] / totalProcessos) * 100)}%` : '0%']),
+                theme: 'grid',
+                headStyles: { fillColor: secondaryColor, textColor: 255, fontSize: 10 },
+                bodyStyles: { textColor: 50, fontSize: 9, cellPadding: 5 },
+                alternateRowStyles: { fillColor: [240, 240, 240] },
+                margin: { left: 20, right: 20 }
+            });
+            
+            // Página 2: Lista de Processos
+            doc.addPage();
+            addHeader(doc, 'Lista de Processos');
+            
+            const processTableData = processos.map(p => [
+                p.numero,
+                p.cliente,
+                p.parteContraria || '—',
+                formatarMoeda(p.valorCausa),
+                formatarData(p.proximoPrazo),
+                p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Em Andamento' : 'Concluído')
+            ]);
+            
+            doc.autoTable({
+                startY: 50,
+                head: [['Nº Processo', 'Cliente', 'Parte Contrária', 'Valor da Causa', 'Próximo Prazo', 'Status']],
+                body: processTableData,
+                theme: 'grid',
+                headStyles: { fillColor: secondaryColor, textColor: 255, fontSize: 8 },
+                bodyStyles: { textColor: 50, fontSize: 7, cellPadding: 3 },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+                margin: { left: 15, right: 15 },
+                columnStyles: {
+                    0: { cellWidth: 45 },
+                    1: { cellWidth: 35 },
+                    2: { cellWidth: 35 },
+                    3: { cellWidth: 25 },
+                    4: { cellWidth: 25 },
+                    5: { cellWidth: 20 }
+                }
+            });
+            
+            // Página 3: Próximas Audiências
+            doc.addPage();
+            addHeader(doc, 'Próximas Audiências');
+            
+            const proximasAudiencias = audiencias.filter(a => new Date(a.data) > new Date())
+                .sort((a, b) => new Date(a.data) - new Date(b.data));
+            
+            const audienciasData = proximasAudiencias.map(a => {
+                const processo = processos.find(p => p.id === a.processoId);
+                return [
+                    processo?.numero || '—',
+                    formatarDataHora(a.data),
+                    a.tipo,
+                    a.local || '—'
+                ];
+            });
+            
+            if (audienciasData.length > 0) {
+                doc.autoTable({
+                    startY: 50,
+                    head: [['Processo', 'Data/Hora', 'Tipo', 'Local']],
+                    body: audienciasData,
+                    theme: 'grid',
+                    headStyles: { fillColor: secondaryColor, textColor: 255, fontSize: 10 },
+                    bodyStyles: { textColor: 50, fontSize: 8 },
+                    alternateRowStyles: { fillColor: [245, 245, 245] }
+                });
+            } else {
+                doc.setFontSize(12);
+                doc.setTextColor(128, 128, 128);
+                doc.text('Nenhuma audiência agendada', doc.internal.pageSize.getWidth() / 2, 80, { align: 'center' });
+            }
+            
+            // Página 4: Relatório Financeiro
+            doc.addPage();
+            addHeader(doc, 'Relatório Financeiro');
+            
+            const financeiroData = financeiro.map(f => [
+                formatarData(f.data),
+                f.descricao || 'Recebimento',
+                formatarMoeda(f.valor)
+            ]);
+            
+            const totalRecebido = financeiro.reduce((sum, f) => sum + f.valor, 0);
+            const totalHonorarios = processos.reduce((sum, p) => sum + (p.honorarios || 0), 0);
+            const pendente = totalHonorarios - totalRecebido;
+            
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Resumo Financeiro:', 20, 55);
+            
+            doc.autoTable({
+                startY: 62,
+                body: [
+                    ['Total de Honorários Contratados', formatarMoeda(totalHonorarios)],
+                    ['Total Recebido', formatarMoeda(totalRecebido)],
+                    ['Saldo Pendente', formatarMoeda(pendente)],
+                    ['Meta Mensal', formatarMoeda(metaFinanceira)]
+                ],
+                theme: 'plain',
+                styles: { fontSize: 11, cellPadding: 5 },
+                columnStyles: { 0: { fontStyle: 'bold', textColor: [50, 50, 50] }, 1: { textColor: [16, 185, 129] } }
+            });
+            
+            if (financeiroData.length > 0) {
+                let yFin = doc.lastAutoTable.finalY + 15;
+                doc.text('Histórico de Recebimentos:', 20, yFin);
+                
+                doc.autoTable({
+                    startY: yFin + 7,
+                    head: [['Data', 'Descrição', 'Valor']],
+                    body: financeiroData,
+                    theme: 'grid',
+                    headStyles: { fillColor: secondaryColor, textColor: 255 },
+                    bodyStyles: { textColor: 50 }
+                });
+            }
+            
+            // Página 5: Tarefas Pendentes
+            doc.addPage();
+            addHeader(doc, 'Tarefas Pendentes');
+            
+            const tarefasPendentes = tarefas.filter(t => !t.concluida);
+            const tarefasData = tarefasPendentes.map(t => [
+                t.descricao,
+                formatarDataHora(t.prazo),
+                t.prioridade
+            ]);
+            
+            if (tarefasData.length > 0) {
+                doc.autoTable({
+                    startY: 50,
+                    head: [['Descrição', 'Prazo', 'Prioridade']],
+                    body: tarefasData,
+                    theme: 'grid',
+                    headStyles: { fillColor: secondaryColor, textColor: 255 },
+                    bodyStyles: { textColor: 50 },
+                    columnStyles: {
+                        2: (data) => {
+                            if (data.cell.text === 'Alta') return { textColor: [220, 38, 38], fontStyle: 'bold' };
+                            if (data.cell.text === 'Média') return { textColor: [245, 158, 11] };
+                            return { textColor: [16, 185, 129] };
+                        }
+                    }
+                });
+            } else {
+                doc.setFontSize(12);
+                doc.setTextColor(128, 128, 128);
+                doc.text('Nenhuma tarefa pendente', doc.internal.pageSize.getWidth() / 2, 80, { align: 'center' });
+            }
+            
+            addFooter(doc);
+            
+            // Salvar PDF
+            doc.save(`relatorio_completo_${new Date().toISOString().split('T')[0]}.pdf`);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'PDF Gerado!',
+                text: 'Relatório completo gerado com sucesso',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+        
+        // Gerar PDF Financeiro
+        function gerarPDFFinanceiro() {
+            gerarPDFCompleto();
+            fecharModal('modalRelatorios');
+        }
+        
+        // Gerar PDF de Prazos
+        function gerarPDFPrazos() {
+            const urgentes = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente');
+            if (urgentes.length === 0) {
+                Swal.fire('Info', 'Nenhum prazo fatal encontrado', 'info');
+                return;
+            }
+            
+            Swal.fire({
+                title: 'Prazos Fatais',
+                html: urgentes.map(p => `
+                    <div class="text-left p-2 border-b">
+                        <strong>${p.numero}</strong><br>
+                        Cliente: ${p.cliente}<br>
+                        Prazo: ${formatarData(p.proximoPrazo)}
+                    </div>
+                `).join(''),
+                icon: 'warning'
+            });
+            fecharModal('modalRelatorios');
+        }
+        
+        // Gerar PDF de Audiências
+        function gerarPDFAudiencias() {
+            gerarPDFCompleto();
+            fecharModal('modalRelatorios');
+        }
+        
+        // Gerar PDF de Processo Individual
+        async function gerarPDFProcessoIndividual() {
+            const processosList = processos.map(p => ({ id: p.id, nome: `${p.numero} - ${p.cliente}` }));
+            
+            const { value: processoId } = await Swal.fire({
+                title: 'Selecione o Processo',
+                input: 'select',
+                inputOptions: Object.fromEntries(processosList.map(p => [p.id, p.nome])),
+                inputPlaceholder: 'Selecione um processo',
+                showCancelButton: true
+            });
+            
+            if (processoId) {
+                const processo = processos.find(p => p.id === parseInt(processoId));
+                const audiencia = audiencias.find(a => a.processoId === processo.id);
+                const tarefasProcesso = tarefas.filter(t => t.descricao.toLowerCase().includes(processo.numero.toLowerCase()));
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                
+                // Cabeçalho
+                doc.setFillColor(27, 55, 96);
+                doc.rect(0, 0, doc.internal.pageSize.getWidth(), 45, 'F');
+                doc.setFontSize(22);
+                doc.setTextColor(255, 255, 255);
+                doc.text('⚖️ AdvFlow Pro', 20, 20);
+                doc.setFontSize(12);
+                doc.text('Relatório Individual de Processo', 20, 32);
+                doc.setFontSize(9);
+                doc.setTextColor(200, 200, 200);
+                doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 20, 40);
+                
+                // Dados do processo
+                let y = 65;
+                doc.setFontSize(14);
+                doc.setTextColor(27, 55, 96);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Dados do Processo', 20, y);
+                
+                y += 10;
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                
+                const dados = [
+                    ['Número do Processo:', processo.numero],
+                    ['Cliente:', processo.cliente],
+                    ['CPF/CNPJ:', processo.cpfCliente || '—'],
+                    ['Parte Contrária:', processo.parteContraria || '—'],
+                    ['Advogado Adverso:', processo.advogadoAdverso || '—'],
+                    ['Vara/Comarca:', processo.vara || '—'],
+                    ['Valor da Causa:', formatarMoeda(processo.valorCausa)],
+                    ['Honorários:', formatarMoeda(processo.honorarios)],
+                    ['Status:', processo.status === 'aguardando' ? 'Aguardando' : (processo.status === 'andamento' ? 'Em Andamento' : 'Concluído')],
+                    ['Data de Distribuição:', formatarData(processo.dataDistribuicao)],
+                    ['Próximo Prazo:', formatarData(processo.proximoPrazo)],
+                    ['Resultado:', processo.resultado ? (processo.resultado === 'ganho' ? '✅ Ganho' : (processo.resultado === 'acordo' ? '🤝 Acordo' : '❌ Perdido')) : '—']
+                ];
+                
+                doc.autoTable({
+                    startY: y,
+                    body: dados,
+                    theme: 'plain',
+                    styles: { fontSize: 10, cellPadding: 4 },
+                    columnStyles: { 0: { fontStyle: 'bold', textColor: [27, 55, 96] } }
+                });
+                
+                let tableY = doc.lastAutoTable.finalY + 10;
+                
+                // Observações
+                if (processo.observacoes) {
+                    doc.setFontSize(11);
+                    doc.setTextColor(27, 55, 96);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Observações:', 20, tableY);
+                    tableY += 8;
+                    doc.setFontSize(9);
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFont('helvetica', 'normal');
+                    const splitObs = doc.splitTextToSize(processo.observacoes, 170);
+                    doc.text(splitObs, 20, tableY);
+                    tableY += splitObs.length * 5 + 10;
+                }
+                
+                // Audiência
+                if (audiencia) {
+                    doc.setFontSize(11);
+                    doc.setTextColor(27, 55, 96);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Próxima Audiência:', 20, tableY);
+                    tableY += 8;
+                    doc.setFontSize(9);
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`Data: ${formatarDataHora(audiencia.data)}`, 25, tableY);
+                    tableY += 6;
+                    doc.text(`Tipo: ${audiencia.tipo}`, 25, tableY);
+                    tableY += 6;
+                    doc.text(`Local: ${audiencia.local || '—'}`, 25, tableY);
+                    tableY += 10;
+                }
+                
+                // Tarefas relacionadas
+                if (tarefasProcesso.length > 0) {
+                    doc.setFontSize(11);
+                    doc.setTextColor(27, 55, 96);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Tarefas Relacionadas:', 20, tableY);
+                    
+                    doc.autoTable({
+                        startY: tableY + 5,
+                        head: [['Descrição', 'Prazo', 'Status']],
+                        body: tarefasProcesso.map(t => [t.descricao, formatarDataHora(t.prazo), t.concluida ? '✅ Concluída' : '⏳ Pendente']),
+                        theme: 'grid',
+                        headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+                        bodyStyles: { textColor: 50 }
+                    });
+                }
+                
+                // Rodapé
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(128, 128, 128);
+                    doc.text(
+                        `AdvFlow Pro - Relatório Individual - Página ${i} de ${pageCount}`,
+                        doc.internal.pageSize.getWidth() / 2,
+                        doc.internal.pageSize.getHeight() - 10,
+                        { align: 'center' }
+                    );
+                }
+                
+                doc.save(`processo_${processo.numero}_${new Date().toISOString().split('T')[0]}.pdf`);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'PDF Gerado!',
+                    text: 'Relatório individual gerado com sucesso',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+            fecharModal('modalRelatorios');
         }
 
         // ==================== CRUD PRINCIPAL ====================
         function carregarDados() {
-            // Carregar processos
             const savedProcessos = localStorage.getItem('advflow_processos');
             if (savedProcessos) {
                 processos = JSON.parse(savedProcessos);
@@ -744,7 +1230,6 @@
                 salvarProcessos();
             }
             
-            // Carregar audiências
             const savedAudiencias = localStorage.getItem('advflow_audiencias');
             if (savedAudiencias) {
                 audiencias = JSON.parse(savedAudiencias);
@@ -753,7 +1238,6 @@
                 salvarAudiencias();
             }
             
-            // Carregar tarefas
             const savedTarefas = localStorage.getItem('advflow_tarefas');
             if (savedTarefas) {
                 tarefas = JSON.parse(savedTarefas);
@@ -762,7 +1246,6 @@
                 salvarTarefas();
             }
             
-            // Carregar financeiro
             const savedFinanceiro = localStorage.getItem('advflow_financeiro');
             if (savedFinanceiro) {
                 financeiro = JSON.parse(savedFinanceiro);
@@ -771,7 +1254,6 @@
                 salvarFinanceiro();
             }
             
-            // Carregar modelos
             const savedModelos = localStorage.getItem('advflow_modelos');
             if (savedModelos) {
                 modelosUsuario = JSON.parse(savedModelos);
@@ -780,13 +1262,11 @@
                 salvarModelos();
             }
             
-            // Carregar feriados
             const savedFeriados = localStorage.getItem('advflow_feriados');
             if (savedFeriados) {
                 feriados = JSON.parse(savedFeriados);
             }
             
-            // Carregar meta
             const savedMeta = localStorage.getItem('advflow_meta');
             if (savedMeta) {
                 metaFinanceira = parseFloat(savedMeta);
@@ -827,11 +1307,9 @@
                 const index = processos.findIndex(p => p.id === parseInt(id));
                 if (index !== -1) {
                     processos[index] = { ...processos[index], ...processo };
-                    addNotificacao(`Processo ${processo.numero} atualizado`, 'info');
                 }
             } else {
                 processos.push(processo);
-                addNotificacao(`Novo processo criado: ${processo.numero}`, 'info');
             }
             
             salvarProcessos();
@@ -872,7 +1350,7 @@
         function excluirProcesso(id) {
             Swal.fire({
                 title: 'Confirmar exclusão',
-                text: 'Deseja realmente excluir este processo? Esta ação não pode ser desfeita.',
+                text: 'Deseja realmente excluir este processo?',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -881,50 +1359,38 @@
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    const processo = processos.find(p => p.id === id);
                     processos = processos.filter(p => p.id !== id);
                     audiencias = audiencias.filter(a => a.processoId !== id);
                     salvarProcessos();
                     salvarAudiencias();
                     atualizarUI();
-                    addNotificacao(`Processo ${processo?.numero || id} excluído`, 'info');
                     Swal.fire('Excluído!', 'Processo removido com sucesso.', 'success');
                 }
             });
         }
 
-        // FUNÇÃO CORRIGIDA - Atualizar status do processo
         function atualizarStatusProcesso(id, novoStatus) {
             const processo = processos.find(p => p.id === id);
             if (processo) {
-                const statusAntigo = processo.status;
                 processo.status = novoStatus;
-                
-                // Se foi concluído, perguntar o resultado
-                if (novoStatus === 'concluido' && statusAntigo !== 'concluido') {
+                if (novoStatus === 'concluido' && !processo.resultado) {
                     Swal.fire({
                         title: 'Concluir Processo',
                         text: 'Registre o resultado do processo',
                         input: 'select',
-                        inputOptions: { 
-                            'ganho': '✅ Ganho', 
-                            'perdido': '❌ Perdido', 
-                            'acordo': '🤝 Acordo' 
-                        },
+                        inputOptions: { 'ganho': '✅ Ganho', 'perdido': '❌ Perdido', 'acordo': '🤝 Acordo' },
                         showCancelButton: true,
                         confirmButtonText: 'Confirmar'
                     }).then((result) => {
                         if (result.value) {
                             processo.resultado = result.value;
-                            addNotificacao(`Processo ${processo.numero} concluído com resultado: ${result.value === 'ganho' ? 'Ganho' : (result.value === 'acordo' ? 'Acordo' : 'Perdido')}`, 'info');
+                            salvarProcessos();
+                            atualizarUI();
                         }
-                        salvarProcessos();
-                        atualizarUI();
                     });
                 } else {
                     salvarProcessos();
                     atualizarUI();
-                    addNotificacao(`Processo ${processo.numero} movido para ${novoStatus === 'andamento' ? 'Em Andamento' : (novoStatus === 'concluido' ? 'Concluído' : 'Aguardando')}`, 'info');
                 }
             }
         }
@@ -943,7 +1409,6 @@
             salvarAudiencias();
             fecharModal('modalAudiencia');
             atualizarUI();
-            addNotificacao(`Audiência agendada para ${formatarDataHora(audiencia.data)}`, 'info');
             Swal.fire('Agendado!', 'Audiência agendada com sucesso', 'success');
         }
 
@@ -1001,7 +1466,6 @@
                     data: new Date().toISOString()
                 });
                 salvarModelos();
-                addNotificacao('Minuta de petição salva', 'info');
                 Swal.fire('Salvo!', 'Petição salva em documentos', 'success');
                 fecharModal('modalPeticao');
             } else {
@@ -1057,53 +1521,6 @@
             XLSX.utils.book_append_sheet(wb, ws, 'Processos');
             XLSX.writeFile(wb, `processos_${new Date().toISOString().split('T')[0]}.xlsx`);
             Swal.fire('Exportado!', 'Arquivo Excel gerado', 'success');
-        }
-
-        function exportarPDF() {
-            Swal.fire('Funcionalidade em desenvolvimento', 'Em breve', 'info');
-        }
-
-        function gerarRelatorioProcessos() {
-            exportarExcel();
-            fecharModal('modalRelatorios');
-        }
-
-        function gerarRelatorioFinanceiro() {
-            const totalReceitas = financeiro.reduce((sum, f) => sum + f.valor, 0);
-            const honorariosPendentes = processos.filter(p => p.status !== 'concluido').reduce((sum, p) => sum + (p.honorarios || 0), 0);
-            Swal.fire({
-                title: 'Relatório Financeiro',
-                html: `
-                    <div class="text-left">
-                        <p><strong>Recebido:</strong> ${formatarMoeda(totalReceitas)}</p>
-                        <p><strong>Pendente:</strong> ${formatarMoeda(honorariosPendentes)}</p>
-                        <p><strong>Meta:</strong> ${formatarMoeda(metaFinanceira)}</p>
-                    </div>
-                `
-            });
-            fecharModal('modalRelatorios');
-        }
-
-        function gerarRelatorioPrazos() {
-            const urgentes = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente');
-            Swal.fire({
-                title: 'Prazos Fatais',
-                html: urgentes.length ? urgentes.map(p => `• ${p.numero}: ${formatarData(p.proximoPrazo)}`).join('<br>') : 'Nenhum prazo fatal',
-                icon: urgentes.length ? 'warning' : 'info'
-            });
-            fecharModal('modalRelatorios');
-        }
-
-        function gerarRelatorioAudiencias() {
-            const proximas = audiencias.filter(a => new Date(a.data) > new Date()).slice(0,5);
-            Swal.fire({
-                title: 'Próximas Audiências',
-                html: proximas.length ? proximas.map(a => {
-                    const p = processos.find(p => p.id === a.processoId);
-                    return `• ${p?.numero}: ${formatarDataHora(a.data)} - ${a.tipo}`;
-                }).join('<br>') : 'Nenhuma audiência agendada'
-            });
-            fecharModal('modalRelatorios');
         }
 
         // ==================== BACKUP ====================
@@ -1241,7 +1658,6 @@
 
         // ==================== UI PRINCIPAL ====================
         function atualizarUI() {
-            // Data e hora
             const agora = new Date();
             document.getElementById('dataAtual').innerText = agora.toLocaleDateString('pt-BR');
             document.getElementById('horaAtual').innerText = agora.toLocaleTimeString('pt-BR');
@@ -1287,23 +1703,17 @@
                 document.getElementById('proximaAudiencia').innerHTML = '—';
             }
             
-            // KANBAN - CORRIGIDO
+            // KANBAN
             const kanbanContainers = {
                 aguardando: document.getElementById('kanban-aguardando'),
                 andamento: document.getElementById('kanban-andamento'),
                 concluido: document.getElementById('kanban-concluido')
             };
             
-            // Contadores
-            const countAguardando = processos.filter(p => p.status === 'aguardando').length;
-            const countAndamento = processos.filter(p => p.status === 'andamento').length;
-            const countConcluidos = processos.filter(p => p.status === 'concluido').length;
+            document.getElementById('countAguardando').innerText = processos.filter(p => p.status === 'aguardando').length;
+            document.getElementById('countAndamento').innerText = processos.filter(p => p.status === 'andamento').length;
+            document.getElementById('countConcluidos').innerText = processos.filter(p => p.status === 'concluido').length;
             
-            document.getElementById('countAguardando').innerText = countAguardando;
-            document.getElementById('countAndamento').innerText = countAndamento;
-            document.getElementById('countConcluidos').innerText = countConcluidos;
-            
-            // Renderizar cada coluna
             for (const [status, container] of Object.entries(kanbanContainers)) {
                 if (!container) continue;
                 const processosStatus = processos.filter(p => p.status === status);
@@ -1339,7 +1749,6 @@
                 }
             }
             
-            // Configurar drag and drop
             document.querySelectorAll('.process-card').forEach(card => {
                 card.addEventListener('dragstart', (e) => {
                     e.dataTransfer.setData('text/plain', card.getAttribute('data-id'));
@@ -1355,8 +1764,7 @@
                 column.addEventListener('drop', (e) => {
                     e.preventDefault();
                     const id = parseInt(e.dataTransfer.getData('text/plain'));
-                    const targetColumn = column.querySelector('[data-status]') || column;
-                    const novoStatus = column.getAttribute('data-status') || targetColumn.getAttribute('data-status');
+                    const novoStatus = column.getAttribute('data-status');
                     if (novoStatus) {
                         atualizarStatusProcesso(id, novoStatus);
                     }
@@ -1414,7 +1822,7 @@
                     return `
                         <tr onclick="editarProcesso(${p.id})">
                             <td class="p-3 text-sm font-mono">${p.numero}</td>
-                            <td class="p-3 text-sm">${p.cliente}<td>
+                            <td class="p-3 text-sm">${p.cliente}</td>
                             <td class="p-3 text-sm">${p.parteContraria || '—'}</td>
                             <td class="p-3 text-sm">${formatarMoeda(p.valorCausa)}</td>
                             <td class="p-3 text-sm"><span class="${getStatusPrazo(p.proximoPrazo) === 'urgente' ? 'text-red-400 font-bold' : ''}">${formatarData(p.proximoPrazo)}</span></td>
