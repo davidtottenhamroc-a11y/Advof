@@ -42,9 +42,6 @@
         .kanban-empty { text-align: center; padding: 20px; color: #6b7280; font-size: 0.875rem; }
         .loader { border: 3px solid rgba(59, 130, 246, 0.3); border-radius: 50%; border-top: 3px solid #3b82f6; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .status-aguardando { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-        .status-andamento { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-        .status-concluido { background: rgba(16, 185, 129, 0.2); color: #34d399; }
     </style>
 </head>
 <body>
@@ -84,7 +81,7 @@
                     <div><p class="text-gray-400 text-xs">Total Processos</p><p class="text-2xl font-bold text-blue-400" id="totalProcessos">0</p></div>
                     <i class="fas fa-balance-scale text-2xl text-blue-500/50"></i>
                 </div>
-                <div class="text-xs text-gray-500 mt-1">Ativos: <span id="processosAtivos">0</span> | <span class="text-blue-400">📊 Clique</span></div>
+                <div class="text-xs text-gray-500 mt-1">Ativos: <span id="processosAtivos">0</span> | <span class="text-blue-400 text-xs">📊 Clique</span></div>
             </div>
             <div class="glass-card rounded-xl p-3 clickable-card" onclick="mostrarExtratoPrazos()">
                 <div class="flex items-center justify-between">
@@ -145,7 +142,7 @@
                     <div class="flex gap-2">
                         <button onclick="filtrarKanban('todos')" class="text-xs bg-blue-600/30 hover:bg-blue-600/50 px-2 py-1 rounded transition">Todos</button>
                         <button onclick="filtrarKanban('urgente')" class="text-xs bg-red-600/30 hover:bg-red-600/50 px-2 py-1 rounded transition">Urgentes</button>
-                        <button onclick="exportarExcel()" class="text-xs bg-green-600/30 hover:bg-green-600/50 px-2 py-1 rounded transition"><i class="fas fa-file-excel mr-1"></i>Exportar</button>
+                        <button onclick="exportarExcelGeral()" class="text-xs bg-green-600/30 hover:bg-green-600/50 px-2 py-1 rounded transition"><i class="fas fa-file-excel mr-1"></i>Exportar</button>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -192,7 +189,7 @@
 
     <div id="modalTarefa" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-md mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">Nova Tarefa</h3><button onclick="fecharModal('modalTarefa')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><form id="formTarefa" class="p-6 space-y-4"><div><label class="block text-sm mb-2">Descrição *</label><input type="text" id="tarefaDescricao" required class="input-modern w-full"></div><div><label class="block text-sm mb-2">Prazo *</label><input type="datetime-local" id="tarefaPrazo" required class="input-modern w-full"></div><div><label class="block text-sm mb-2">Prioridade</label><select id="tarefaPrioridade" class="input-modern w-full"><option>Alta</option><option>Média</option><option>Baixa</option></select></div><div><label class="block text-sm mb-2">Vincular ao Processo</label><select id="tarefaProcesso" class="input-modern w-full"><option value="">Nenhum</option></select></div><button type="submit" class="w-full btn-primary py-2 rounded-lg transition">Adicionar Tarefa</button></form></div></div>
 
-    <div id="modalHonorarios" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-4xl mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">📊 Dashboard Financeiro</h3><button onclick="fecharModal('modalHonorarios')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">Total Honorários</p><p class="text-2xl font-bold text-green-400" id="financeiroTotalHonorarios">R$ 0</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">Total Recebido</p><p class="text-2xl font-bold text-blue-400" id="financeiroTotalRecebido">R$ 0</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">Saldo Pendente</p><p class="text-2xl font-bold text-yellow-400" id="financeiroPendente">R$ 0</p></div></div><canvas id="graficoHonorarios" height="200"></canvas><div class="mt-6"><h4 class="font-bold mb-3">📋 Últimos Recebimentos</h4><div id="listaRecebimentos" class="max-h-64 overflow-y-auto space-y-2"></div></div><button onclick="adicionarRecebimento()" class="w-full mt-4 btn-primary py-2 rounded-lg transition"><i class="fas fa-plus mr-2"></i>Registrar Recebimento</button></div></div></div>
+    <div id="modalHonorarios" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-4xl mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">📊 Dashboard Financeiro</h3><button onclick="fecharModal('modalHonorarios')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">Total Honorários</p><p class="text-2xl font-bold text-green-400" id="financeiroTotalHonorarios">R$ 0</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">Total Recebido</p><p class="text-2xl font-bold text-blue-400" id="financeiroTotalRecebido">R$ 0</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">Saldo Pendente</p><p class="text-2xl font-bold text-yellow-400" id="financeiroPendente">R$ 0</p></div></div><canvas id="graficoHonorariosModal" height="200"></canvas><div class="mt-6"><h4 class="font-bold mb-3">📋 Últimos Recebimentos</h4><div id="listaRecebimentos" class="max-h-64 overflow-y-auto space-y-2"></div></div><button onclick="adicionarRecebimento()" class="w-full mt-4 btn-primary py-2 rounded-lg transition"><i class="fas fa-plus mr-2"></i>Registrar Recebimento</button></div></div></div>
 
     <div id="modalRelatorios" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-md mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">📑 Relatórios</h3><button onclick="fecharModal('modalRelatorios')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6 space-y-3"><button onclick="gerarPDFCompleto()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-file-pdf text-red-400 mr-2"></i>📊 Relatório Completo</button><button onclick="gerarPDFFinanceiroDetalhado()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-chart-line text-green-400 mr-2"></i>💰 Relatório Financeiro Detalhado</button><button onclick="gerarPDFPrazos()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-hourglass-half text-yellow-400 mr-2"></i>⚠️ Relatório de Prazos</button><button onclick="gerarPDFAudiencias()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-gavel text-purple-400 mr-2"></i>⚖️ Relatório de Audiências</button><button onclick="gerarPDFProcessoIndividual()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-file-alt text-blue-400 mr-2"></i>📄 Relatório Individual</button></div></div></div>
 
@@ -436,7 +433,7 @@
             document.getElementById('extratoConteudo').innerHTML = html;
             abrirModal('modalExtrato');
         }
-        
+
         // ==================== EXPORTAÇÃO DE EXTRATOS ====================
         function exportarExtratoPDF() {
             if (!extratoAtual) return;
@@ -448,8 +445,8 @@
             doc.rect(0, 0, doc.internal.pageSize.getWidth(), 40, 'F');
             doc.setFontSize(22); doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold');
             doc.text('⚖️ AdvFlow Pro', 20, 20);
-            doc.setFontSize(11); doc.text(extratoAtual.titulo, 20, 32);
-            doc.setFontSize(9); doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 20, 40);
+            doc.setFontSize(11); doc.text(extratoAtual.titulo.replace(/<[^>]*>/g, ''), 20, 32);
+            doc.setFontSize(9); doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, doc.internal.pageSize.getWidth() - 50, 15);
             
             let y = 55;
             doc.setFontSize(12); doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]); doc.setFont('helvetica', 'bold');
@@ -461,7 +458,6 @@
                 const totalHonorarios = processos.reduce((s, p) => s + (p.honorarios || 0), 0);
                 const totalRecebido = processos.reduce((s, p) => s + (p.valorRecebido || 0), 0);
                 doc.autoTable({ startY: y, body: [['Total em Causa', formatarMoeda(totalValor)], ['Total Honorários', formatarMoeda(totalHonorarios)], ['Total Recebido', formatarMoeda(totalRecebido)]], theme: 'plain', styles: { fontSize: 10 }, columnStyles: { 0: { fontStyle: 'bold' } } });
-                y = doc.lastAutoTable.finalY + 15;
             }
             
             doc.save(`extrato_${extratoAtual.tipo}_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -492,7 +488,7 @@
             Swal.fire({ icon: 'success', title: 'Excel Exportado!', text: 'Extrato salvo com sucesso', timer: 1500, showConfirmButton: false });
         }
 
-        // ==================== GERADOR DE PDF FINANCEIRO ====================
+        // ==================== GERADOR DE PDF ====================
         async function gerarPDFFinanceiroDetalhado() {
             Swal.fire({ title: 'Gerando PDF Financeiro...', html: '<div class="loader"></div>', showConfirmButton: false, allowOutsideClick: false });
             const { jsPDF } = window.jspdf;
@@ -746,7 +742,7 @@
             });
         }
 
-        function exportarExcel() {
+        function exportarExcelGeral() {
             const dados = processos.map(p => ({ 'Nº Processo': p.numero, 'Cliente': p.cliente, 'Parte Contrária': p.parteContraria, 'Valor da Causa': p.valorCausa, 'Honorários': p.honorarios, 'Recebido': p.valorRecebido || 0, 'Status': p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Em Andamento' : 'Concluído'), 'Próximo Prazo': formatarData(p.proximoPrazo), 'Resultado': p.resultado || '—' }));
             const ws = XLSX.utils.json_to_sheet(dados); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Processos'); XLSX.writeFile(wb, `processos_${new Date().toISOString().split('T')[0]}.xlsx`);
             Swal.fire('Exportado!', 'Arquivo Excel gerado', 'success');
@@ -862,12 +858,12 @@
                 window.honorariosChart = new Chart(document.getElementById('graficoHonorariosBI'), { type: 'bar', data: { labels: ['Aguardando', 'Em Andamento', 'Concluídos'], datasets: [{ label: 'Honorários (R$)', data: [honorariosPorStatus.aguardando, honorariosPorStatus.andamento, honorariosPorStatus.concluido], backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#e2e8f0' } } }, scales: { y: { ticks: { color: '#e2e8f0' } }, x: { ticks: { color: '#e2e8f0' } } } } });
             }
             
-            if (document.getElementById('graficoHonorarios') && window.graficoHonorariosModal) window.graficoHonorariosModal.destroy();
-            if (document.getElementById('graficoHonorarios')) {
+            if (document.getElementById('graficoHonorariosModal') && window.graficoHonorariosModal) window.graficoHonorariosModal.destroy();
+            if (document.getElementById('graficoHonorariosModal')) {
                 const totalHonorarios = processos.reduce((s,p) => s + (p.honorarios || 0), 0);
                 const totalRecebido = processos.reduce((s,p) => s + (p.valorRecebido || 0), 0);
                 const pendente = totalHonorarios - totalRecebido;
-                window.graficoHonorariosModal = new Chart(document.getElementById('graficoHonorarios'), { type: 'doughnut', data: { labels: ['Recebido', 'Pendente'], datasets: [{ data: [totalRecebido, pendente], backgroundColor: ['#10b981', '#f59e0b'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: '#e2e8f0' } } } } });
+                window.graficoHonorariosModal = new Chart(document.getElementById('graficoHonorariosModal'), { type: 'doughnut', data: { labels: ['Recebido', 'Pendente'], datasets: [{ data: [totalRecebido, pendente], backgroundColor: ['#10b981', '#f59e0b'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: '#e2e8f0' } } } } });
             }
             
             document.getElementById('financeiroTotalHonorarios').innerText = formatarMoeda(processos.reduce((s,p) => s + (p.honorarios || 0), 0));
