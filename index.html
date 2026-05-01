@@ -2,165 +2,355 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AdvFlow Pro - Sistema Jurídico</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AdvFlow Pro - Sistema Jurídico Inteligente</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: linear-gradient(135deg, #0a0f1c 0%, #0a1628 100%); font-family: 'Inter', sans-serif; color: #e2e8f0; }
-        .glass-card { background: rgba(15, 30, 50, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 16px; }
-        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
-        .status-aguardando { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-        .status-andamento { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-        .status-concluido { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-        .process-card { background: rgba(25, 45, 65, 0.95); border-left: 3px solid #3b82f6; border-radius: 10px; cursor: pointer; margin-bottom: 10px; padding: 12px; }
-        .process-card:hover { transform: translateX(4px); }
-        .input-modern { background: rgba(10, 20, 35, 0.8); border: 1px solid #2d4a6e; border-radius: 10px; padding: 8px 12px; color: #e2e8f0; width: 100%; }
-        .input-modern:focus { border-color: #3b82f6; outline: none; }
-        .kanban-column { background: rgba(8, 18, 30, 0.5); border-radius: 16px; border: 1px solid rgba(59, 130, 246, 0.2); min-height: 500px; padding: 12px; }
+        body { background: linear-gradient(135deg, #0a0f1c 0%, #0a1628 50%, #0d1b2a 100%); font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; color: #e2e8f0; min-height: 100vh; }
+        .glass-card { background: rgba(15, 30, 50, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 16px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .glass-card:hover { background: rgba(20, 40, 65, 0.7); border-color: rgba(59, 130, 246, 0.5); transform: translateY(-2px); }
+        .clickable-card { cursor: pointer; transition: all 0.2s; }
+        .clickable-card:hover { transform: scale(1.02); background: rgba(20, 50, 80, 0.8); }
+        .kanban-column { background: rgba(8, 18, 30, 0.5); backdrop-filter: blur(8px); border-radius: 16px; border: 1px solid rgba(59, 130, 246, 0.2); min-height: 550px; }
+        .process-card { background: linear-gradient(135deg, rgba(25, 45, 65, 0.95) 0%, rgba(18, 35, 55, 0.95) 100%); border-left: 3px solid #3b82f6; border-radius: 10px; cursor: grab; transition: all 0.25s ease; }
+        .process-card:active { cursor: grabbing; }
+        .process-card:hover { transform: translateX(4px); border-left-width: 4px; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0a1628; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 10px; }
+        .input-modern { background: rgba(10, 20, 35, 0.8); border: 1px solid #2d4a6e; border-radius: 10px; padding: 8px 12px; color: #e2e8f0; transition: all 0.3s; width: 100%; }
+        .input-modern:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        .modal-glass { background: linear-gradient(135deg, rgba(15, 30, 55, 0.98) 0%, rgba(10, 22, 45, 0.98) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 20px; }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); transition: all 0.3s; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4); }
         .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th { background: rgba(30, 50, 70, 0.6); padding: 12px; text-align: left; }
+        .data-table th { background: rgba(30, 50, 70, 0.6); padding: 12px; text-align: left; font-size: 0.85rem; font-weight: 600; color: #94a3b8; }
         .data-table td { padding: 12px; border-bottom: 1px solid rgba(59, 130, 246, 0.1); }
         .data-table tr:hover { background: rgba(59, 130, 246, 0.1); cursor: pointer; }
-        .modal-glass { background: linear-gradient(135deg, rgba(15, 30, 55, 0.98), rgba(10, 22, 45, 0.98)); border-radius: 20px; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .calendar-day { background: rgba(15, 30, 50, 0.5); border-radius: 8px; padding: 8px; cursor: pointer; transition: all 0.2s; }
+        .calendar-day:hover { background: rgba(59, 130, 246, 0.3); transform: scale(1.05); }
+        .calendar-day.has-event { background: rgba(59, 130, 246, 0.4); border-left: 3px solid #3b82f6; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .kanban-empty { text-align: center; padding: 20px; color: #6b7280; font-size: 0.875rem; }
+        .loader { border: 3px solid rgba(59, 130, 246, 0.3); border-radius: 50%; border-top: 3px solid #3b82f6; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+        .status-aguardando { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-andamento { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .status-concluido { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .connection-status { position: fixed; bottom: 20px; left: 20px; z-index: 1000; }
+        .status-online { background: rgba(16, 185, 129, 0.9); padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .status-offline { background: rgba(239, 68, 68, 0.9); padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .status-connecting { background: rgba(245, 158, 11, 0.9); padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
     </style>
 </head>
 <body>
+    <header class="sticky top-0 z-50 bg-gradient-to-r from-[#0a0f1c] to-[#0d1b2a] border-b border-blue-900/30 shadow-xl">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-wrap justify-between items-center gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-2.5 shadow-lg"><i class="fas fa-scale-balanced text-2xl text-white"></i></div>
+                    <div><h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">AdvFlow Pro</h1><p class="text-xs text-gray-400">Sistema Jurídico - MongoDB Online</p></div>
+                </div>
+                <div class="flex items-center space-x-3 flex-wrap gap-2">
+                    <div class="hidden md:flex items-center space-x-2 bg-blue-900/30 rounded-lg px-3 py-1.5"><i class="fas fa-calendar-alt text-blue-400"></i><span class="text-sm" id="dataAtual"></span></div>
+                    <div class="hidden md:flex items-center space-x-2 bg-blue-900/30 rounded-lg px-3 py-1.5"><i class="fas fa-clock text-blue-400"></i><span class="text-sm" id="horaAtual"></span></div>
+                    <button onclick="abrirPainelBI()" class="btn-primary px-4 py-1.5 rounded-lg transition flex items-center gap-2"><i class="fas fa-chart-line"></i><span class="hidden md:inline">Dashboard</span></button>
+                </div>
+            </div>
+        </div>
+    </header>
+
     <div class="container mx-auto px-4 py-6">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-600 rounded-xl p-3"><i class="fas fa-scale-balanced text-2xl text-white"></i></div>
-                <div><h1 class="text-2xl font-bold">AdvFlow Pro</h1><p class="text-xs text-gray-400">Sistema Jurídico - MongoDB</p></div>
+        <!-- Ações Rápidas -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6 fade-in">
+            <button onclick="abrirModalProcesso()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group"><i class="fas fa-folder-open text-2xl text-blue-400 group-hover:scale-110 transition"></i><p class="text-xs mt-1 font-semibold">Novo Processo</p></button>
+            <button onclick="abrirModalAudiencia()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group"><i class="fas fa-gavel text-2xl text-purple-400 group-hover:scale-110 transition"></i><p class="text-xs mt-1 font-semibold">Audiência</p></button>
+            <button onclick="abrirModalPeticao()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group"><i class="fas fa-file-alt text-2xl text-green-400 group-hover:scale-110 transition"></i><p class="text-xs mt-1 font-semibold">Petição</p></button>
+            <button onclick="abrirModalHonorarios()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group"><i class="fas fa-coins text-2xl text-yellow-400 group-hover:scale-110 transition"></i><p class="text-xs mt-1 font-semibold">Financeiro</p></button>
+            <button onclick="abrirModalRelatorios()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group"><i class="fas fa-chart-pie text-2xl text-red-400 group-hover:scale-110 transition"></i><p class="text-xs mt-1 font-semibold">Relatórios</p></button>
+            <button onclick="abrirModalDocumentos()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group"><i class="fas fa-folder text-2xl text-indigo-400 group-hover:scale-110 transition"></i><p class="text-xs mt-1 font-semibold">Documentos</p></button>
+            <button onclick="abrirConfiguracoes()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group"><i class="fas fa-sliders-h text-2xl text-gray-400 group-hover:scale-110 transition"></i><p class="text-xs mt-1 font-semibold">Config</p></button>
+            <button onclick="exportarBackup()" class="glass-card rounded-xl p-3 text-center hover:scale-105 transition group"><i class="fas fa-download text-2xl text-cyan-400 group-hover:scale-110 transition"></i><p class="text-xs mt-1 font-semibold">Backup</p></button>
+        </div>
+
+        <!-- Cards CLICÁVEIS para Extratos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4 mb-8 fade-in">
+            <div class="glass-card rounded-xl p-3 clickable-card" onclick="mostrarExtratoCausas()">
+                <div class="flex items-center justify-between">
+                    <div><p class="text-gray-400 text-xs">Total Processos</p><p class="text-2xl font-bold text-blue-400" id="totalProcessos">0</p></div>
+                    <i class="fas fa-balance-scale text-2xl text-blue-500/50"></i>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">Ativos: <span id="processosAtivos">0</span></div>
             </div>
-            <div class="flex gap-2">
-                <div class="bg-blue-900/30 rounded-lg px-3 py-1.5"><i class="fas fa-calendar-alt text-blue-400"></i> <span id="dataAtual" class="text-sm"></span></div>
-                <div class="bg-blue-900/30 rounded-lg px-3 py-1.5"><i class="fas fa-clock text-blue-400"></i> <span id="horaAtual" class="text-sm"></span></div>
+            <div class="glass-card rounded-xl p-3 clickable-card" onclick="mostrarExtratoPrazos()">
+                <div class="flex items-center justify-between">
+                    <div><p class="text-gray-400 text-xs">Prazos Fatais</p><p class="text-2xl font-bold text-red-400" id="prazosFatais">0</p></div>
+                    <i class="fas fa-hourglass-end text-2xl text-red-500/50"></i>
+                </div>
+                <div class="text-xs text-red-300 mt-1" id="proximoPrazoFatal">-</div>
+            </div>
+            <div class="glass-card rounded-xl p-3 clickable-card" onclick="mostrarExtratoAudiencias()">
+                <div class="flex items-center justify-between">
+                    <div><p class="text-gray-400 text-xs">Audiências Hoje</p><p class="text-2xl font-bold text-purple-400" id="audienciasHoje">0</p></div>
+                    <i class="fas fa-calendar-check text-2xl text-purple-500/50"></i>
+                </div>
+                <div class="text-xs text-purple-300 mt-1" id="proximaAudiencia">-</div>
+            </div>
+            <div class="glass-card rounded-xl p-3 clickable-card" onclick="mostrarExtratoFinanceiro()">
+                <div class="flex items-center justify-between">
+                    <div><p class="text-gray-400 text-xs">Honorários (Mês)</p><p class="text-2xl font-bold text-green-400" id="honorariosMes">R$ 0</p></div>
+                    <i class="fas fa-dollar-sign text-2xl text-green-500/50"></i>
+                </div>
+                <div class="text-xs text-green-300 mt-1" id="metaHonorarios">Meta: R$ 20.000</div>
+            </div>
+            <div class="glass-card rounded-xl p-3 clickable-card" onclick="mostrarExtratoTaxaExito()">
+                <div class="flex items-center justify-between">
+                    <div><p class="text-gray-400 text-xs">Taxa Êxito</p><p class="text-2xl font-bold text-yellow-400" id="taxaExito">0%</p></div>
+                    <i class="fas fa-trophy text-2xl text-yellow-500/50"></i>
+                </div>
+                <div class="text-xs text-yellow-300 mt-1"><span id="processosGanhos">0</span> ganhos</div>
+            </div>
+            <div class="glass-card rounded-xl p-3 clickable-card" onclick="mostrarExtratoCausas()">
+                <div class="flex items-center justify-between">
+                    <div><p class="text-gray-400 text-xs">Valor em Causa</p><p class="text-2xl font-bold text-orange-400" id="valorCausaTotal">R$ 0</p></div>
+                    <i class="fas fa-chart-line text-2xl text-orange-500/50"></i>
+                </div>
+                <div class="text-xs text-orange-300 mt-1">💰 Clique para extrato</div>
+            </div>
+            <div class="glass-card rounded-xl p-3 clickable-card" onclick="mostrarExtratoTarefas()">
+                <div class="flex items-center justify-between">
+                    <div><p class="text-gray-400 text-xs">Tarefas Pendentes</p><p class="text-2xl font-bold text-cyan-400" id="tarefasPendentes">0</p></div>
+                    <i class="fas fa-tasks text-2xl text-cyan-500/50"></i>
+                </div>
+                <div class="text-xs text-cyan-300 mt-1">Hoje: <span id="tarefasHoje">0</span></div>
+            </div>
+            <div class="glass-card rounded-xl p-3">
+                <div class="flex items-center justify-between">
+                    <div><p class="text-gray-400 text-xs">Documentos</p><p class="text-2xl font-bold text-pink-400" id="totalDocumentos">0</p></div>
+                    <i class="fas fa-file-pdf text-2xl text-pink-500/50"></i>
+                </div>
+                <div class="text-xs text-pink-300 mt-1">Modelos: <span id="totalModelos">4</span></div>
             </div>
         </div>
 
-        <!-- Botões -->
-        <div class="flex gap-3 mb-6">
-            <button onclick="abrirModalProcesso()" class="btn-primary px-4 py-2 rounded-lg"><i class="fas fa-plus mr-2"></i>Novo Processo</button>
-            <button onclick="carregarTodosDados()" class="bg-gray-700 px-4 py-2 rounded-lg"><i class="fas fa-sync-alt mr-2"></i>Atualizar</button>
+        <!-- Pipeline Kanban -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            <div class="lg:col-span-3 fade-in">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-lg font-bold flex items-center gap-2"><i class="fas fa-columns text-blue-400"></i> Pipeline de Processos</h2>
+                    <div class="flex gap-2">
+                        <button onclick="filtrarKanban('todos')" class="text-xs bg-blue-600/30 hover:bg-blue-600/50 px-2 py-1 rounded transition">Todos</button>
+                        <button onclick="filtrarKanban('urgente')" class="text-xs bg-red-600/30 hover:bg-red-600/50 px-2 py-1 rounded transition">Urgentes</button>
+                        <button onclick="exportarExcelGeral()" class="text-xs bg-green-600/30 hover:bg-green-600/50 px-2 py-1 rounded transition"><i class="fas fa-file-excel mr-1"></i>Exportar</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="kanban-column p-3" data-status="aguardando" ondrop="dropProcesso(event)" ondragover="allowDrop(event)">
+                        <div class="flex justify-between items-center mb-3"><h3 class="font-bold"><i class="fas fa-hourglass-half mr-2 text-yellow-400"></i>Aguardando</h3><span class="text-xs bg-yellow-500/20 px-2 py-1 rounded-full" id="countAguardando">0</span></div>
+                        <div id="kanban-aguardando" class="space-y-3 min-h-[400px]"></div>
+                    </div>
+                    <div class="kanban-column p-3" data-status="andamento" ondrop="dropProcesso(event)" ondragover="allowDrop(event)">
+                        <div class="flex justify-between items-center mb-3"><h3 class="font-bold"><i class="fas fa-spinner mr-2 text-blue-400"></i>Em Andamento</h3><span class="text-xs bg-blue-500/20 px-2 py-1 rounded-full" id="countAndamento">0</span></div>
+                        <div id="kanban-andamento" class="space-y-3 min-h-[400px]"></div>
+                    </div>
+                    <div class="kanban-column p-3" data-status="concluido" ondrop="dropProcesso(event)" ondragover="allowDrop(event)">
+                        <div class="flex justify-between items-center mb-3"><h3 class="font-bold"><i class="fas fa-check-circle mr-2 text-green-400"></i>Concluídos</h3><span class="text-xs bg-green-500/20 px-2 py-1 rounded-full" id="countConcluidos">0</span></div>
+                        <div id="kanban-concluido" class="space-y-3 min-h-[400px]"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-4 fade-in">
+                <div class="glass-card rounded-xl p-4"><h3 class="font-bold mb-3"><i class="fas fa-calendar-alt text-blue-400 mr-2"></i>Calendário</h3><div id="miniCalendario" class="grid grid-cols-7 gap-1 text-center text-xs"></div></div>
+                <div class="glass-card rounded-xl p-4"><h3 class="font-bold mb-3"><i class="fas fa-gavel text-purple-400 mr-2"></i>Próximas Audiências</h3><div id="listaAudiencias" class="space-y-2 max-h-64 overflow-y-auto"></div></div>
+                <div class="glass-card rounded-xl p-4"><h3 class="font-bold mb-3 flex justify-between"><span><i class="fas fa-tasks text-cyan-400 mr-2"></i>Tarefas</span><button onclick="abrirModalTarefa()" class="text-xs bg-blue-600/30 hover:bg-blue-600/50 px-2 py-1 rounded"><i class="fas fa-plus"></i> Nova</button></h3><div id="listaTarefas" class="space-y-2 max-h-64 overflow-y-auto"></div></div>
+            </div>
         </div>
 
-        <!-- Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div class="glass-card p-4"><p class="text-gray-400 text-sm">Total Processos</p><p class="text-3xl font-bold text-blue-400" id="totalProcessos">0</p></div>
-            <div class="glass-card p-4"><p class="text-gray-400 text-sm">Ativos</p><p class="text-3xl font-bold text-green-400" id="processosAtivos">0</p></div>
-            <div class="glass-card p-4"><p class="text-gray-400 text-sm">Taxa Êxito</p><p class="text-3xl font-bold text-yellow-400" id="taxaExito">0%</p></div>
-            <div class="glass-card p-4"><p class="text-gray-400 text-sm">Valor em Causa</p><p class="text-3xl font-bold text-orange-400" id="valorCausaTotal">R$ 0</p></div>
-        </div>
-
-        <!-- Kanban -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="kanban-column"><h3 class="font-bold mb-3 text-yellow-400"><i class="fas fa-hourglass-half mr-2"></i>Aguardando</h3><div id="kanban-aguardando"></div></div>
-            <div class="kanban-column"><h3 class="font-bold mb-3 text-blue-400"><i class="fas fa-spinner mr-2"></i>Em Andamento</h3><div id="kanban-andamento"></div></div>
-            <div class="kanban-column"><h3 class="font-bold mb-3 text-green-400"><i class="fas fa-check-circle mr-2"></i>Concluídos</h3><div id="kanban-concluido"></div></div>
-        </div>
-
-        <!-- Tabela -->
-        <div class="glass-card overflow-hidden">
-            <div class="p-4 border-b"><h2 class="font-bold"><i class="fas fa-database text-blue-400 mr-2"></i>Banco de Processos</h2></div>
+        <!-- Tabela de Processos -->
+        <div class="glass-card rounded-xl overflow-hidden fade-in">
+            <div class="p-4 border-b border-blue-900/50">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <h2 class="text-lg font-bold flex items-center gap-2"><i class="fas fa-database text-blue-400"></i> Banco de Processos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <div class="relative"><i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm"></i><input type="text" id="buscaProcessos" placeholder="Buscar..." class="pl-9 pr-3 py-1.5 bg-blue-900/30 rounded-lg text-sm border border-blue-800/50 focus:border-blue-500"></div>
+                        <select id="filtroStatus" class="bg-blue-900/30 rounded-lg text-sm px-3 py-1.5 border border-blue-800/50"><option value="todos">Todos status</option><option value="aguardando">Aguardando</option><option value="andamento">Em Andamento</option><option value="concluido">Concluído</option></select>
+                        <button onclick="gerarPDFCompleto()" class="bg-red-600/30 hover:bg-red-600/50 rounded-lg text-sm px-3 py-1.5 transition"><i class="fas fa-file-pdf mr-1"></i>PDF Completo</button>
+                        <button onclick="gerarPDFFinanceiroDetalhado()" class="bg-green-600/30 hover:bg-green-600/50 rounded-lg text-sm px-3 py-1.5 transition"><i class="fas fa-chart-line mr-1"></i>PDF Financeiro</button>
+                    </div>
+                </div>
+            </div>
             <div class="overflow-x-auto">
-                <table class="data-table"><thead><tr><th>Nº Processo</th><th>Cliente</th><th>Parte Contrária</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="listaProcessos"></tbody></table>
+                <table class="data-table">
+                    <thead><tr><th>Nº Processo</th><th>Cliente</th><th>Parte Contrária</th><th>Valor Causa</th><th>Honorários</th><th>Recebido</th><th>Status</th><th>Ações</th></tr></thead>
+                    <tbody id="listaProcessos"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- Modal Processo -->
-    <div id="modalProcesso" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50"><div class="modal-glass w-full max-w-md mx-4 p-6"><div class="flex justify-between mb-4"><h3 class="text-xl font-bold" id="modalTitulo">Novo Processo</h3><button onclick="fecharModal('modalProcesso')" class="text-gray-400 text-2xl">&times;</button></div><form id="formProcesso"><input type="hidden" id="processoId"><input type="text" id="numeroProcesso" placeholder="Nº Processo" class="input-modern mb-3" required><input type="text" id="cliente" placeholder="Cliente" class="input-modern mb-3" required><input type="text" id="parteContraria" placeholder="Parte Contrária" class="input-modern mb-3"><input type="number" id="valorCausa" placeholder="Valor da Causa" class="input-modern mb-3"><input type="number" id="honorarios" placeholder="Honorários" class="input-modern mb-3"><select id="status" class="input-modern mb-3"><option value="aguardando">Aguardando</option><option value="andamento">Em Andamento</option><option value="concluido">Concluído</option></select><div class="flex gap-3"><button type="submit" class="flex-1 bg-green-600 py-2 rounded-lg">Salvar</button><button type="button" onclick="fecharModal('modalProcesso')" class="flex-1 bg-gray-600 py-2 rounded-lg">Cancelar</button></div></form></div></div>
+    <!-- MODAIS -->
+    <div id="modalProcesso" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 overflow-y-auto"><div class="modal-glass rounded-2xl w-full max-w-4xl mx-4 my-8"><div class="p-6 border-b border-blue-800/50 flex justify-between items-center"><h3 class="text-2xl font-bold" id="modalTitulo">Novo Processo</h3><button onclick="fecharModal('modalProcesso')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><form id="formProcesso" class="p-6"><input type="hidden" id="processoId"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium mb-2">Nº Processo *</label><input type="text" id="numeroProcesso" required class="input-modern w-full"></div><div><label class="block text-sm font-medium mb-2">Data Distribuição</label><input type="date" id="dataDistribuicao" class="input-modern w-full"></div><div><label class="block text-sm font-medium mb-2">Cliente *</label><input type="text" id="cliente" required class="input-modern w-full"></div><div><label class="block text-sm font-medium mb-2">CPF/CNPJ</label><input type="text" id="cpfCliente" class="input-modern w-full"></div><div><label class="block text-sm font-medium mb-2">Parte Contrária</label><input type="text" id="parteContraria" class="input-modern w-full"></div><div><label class="block text-sm font-medium mb-2">Advogado Adverso</label><input type="text" id="advogadoAdverso" class="input-modern w-full"></div><div><label class="block text-sm font-medium mb-2">Valor da Causa</label><input type="number" id="valorCausa" class="input-modern w-full"></div><div><label class="block text-sm font-medium mb-2">Honorários</label><input type="number" id="honorarios" class="input-modern w-full"></div><div><label class="block text-sm font-medium mb-2">Valor Recebido</label><input type="number" id="valorRecebido" class="input-modern w-full"></div><div><label class="block text-sm font-medium mb-2">Vara/Comarca</label><input type="text" id="vara" class="input-modern w-full"></div><div><label class="block text-sm font-medium mb-2">Status</label><select id="status" class="input-modern w-full"><option value="aguardando">Aguardando</option><option value="andamento">Em Andamento</option><option value="concluido">Concluído</option></select></div><div class="md:col-span-2"><label class="block text-sm font-medium mb-2">Próximo Prazo</label><input type="date" id="proximoPrazo" class="input-modern w-full"></div><div class="md:col-span-2"><label class="block text-sm font-medium mb-2">Observações</label><textarea id="observacoes" rows="3" class="input-modern w-full"></textarea></div><div class="md:col-span-2"><label class="block text-sm font-medium mb-2">Resultado</label><select id="resultado" class="input-modern w-full"><option value="">Selecione...</option><option value="ganho">✅ Ganho</option><option value="perdido">❌ Perdido</option><option value="acordo">🤝 Acordo</option></select></div></div><div class="flex gap-3 mt-6"><button type="submit" class="flex-1 btn-primary py-2 rounded-lg transition">Salvar</button><button type="button" onclick="fecharModal('modalProcesso')" class="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg transition">Cancelar</button></div></form></div></div>
+
+    <div id="modalAudiencia" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-md mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">Agendar Audiência</h3><button onclick="fecharModal('modalAudiencia')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><form id="formAudiencia" class="p-6 space-y-4"><div><label class="block text-sm mb-2">Processo *</label><select id="audienciaProcesso" required class="input-modern w-full"></select></div><div><label class="block text-sm mb-2">Data e Hora *</label><input type="datetime-local" id="audienciaData" required class="input-modern w-full"></div><div><label class="block text-sm mb-2">Tipo</label><select id="audienciaTipo" class="input-modern w-full"><option>Instrução e Julgamento</option><option>Conciliação</option><option>Mediação</option><option>Testemunhas</option></select></div><div><label class="block text-sm mb-2">Local</label><input type="text" id="audienciaLocal" class="input-modern w-full"></div><button type="submit" class="w-full btn-primary py-2 rounded-lg transition">Agendar</button></form></div></div>
+
+    <div id="modalPeticao" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-3xl mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">Gerador de Petições</h3><button onclick="fecharModal('modalPeticao')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><form id="formPeticao" class="p-6 space-y-4"><div><label class="block text-sm mb-2">Processo</label><select id="peticaoProcesso" class="input-modern w-full"></select></div><div><label class="block text-sm mb-2">Modelo</label><select id="peticaoModelo" class="input-modern w-full" onchange="carregarModeloPeticao()"><option value="">Selecione um modelo...</option><option value="inicial">📄 Petição Inicial</option><option value="contestacao">⚖️ Contestação</option><option value="recurso">📑 Recurso de Apelação</option><option value="embargos">📌 Embargos de Declaração</option></select></div><div><label class="block text-sm mb-2">Conteúdo</label><textarea id="peticaoConteudo" rows="10" class="input-modern w-full font-mono text-sm" placeholder="Digite o conteúdo da petição aqui..."></textarea></div><div class="flex gap-3"><button type="button" onclick="gerarPeticaoPreview()" class="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg transition">Pré-visualizar</button><button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-lg transition">Salvar</button></div></form></div></div>
+
+    <div id="modalTarefa" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-md mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">Nova Tarefa</h3><button onclick="fecharModal('modalTarefa')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><form id="formTarefa" class="p-6 space-y-4"><div><label class="block text-sm mb-2">Descrição *</label><input type="text" id="tarefaDescricao" required class="input-modern w-full"></div><div><label class="block text-sm mb-2">Prazo *</label><input type="datetime-local" id="tarefaPrazo" required class="input-modern w-full"></div><div><label class="block text-sm mb-2">Prioridade</label><select id="tarefaPrioridade" class="input-modern w-full"><option>Alta</option><option>Média</option><option>Baixa</option></select></div><div><label class="block text-sm mb-2">Vincular ao Processo</label><select id="tarefaProcesso" class="input-modern w-full"><option value="">Nenhum</option></select></div><button type="submit" class="w-full btn-primary py-2 rounded-lg transition">Adicionar Tarefa</button></form></div></div>
+
+    <div id="modalHonorarios" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-4xl mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">📊 Dashboard Financeiro</h3><button onclick="fecharModal('modalHonorarios')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">Total Honorários</p><p class="text-2xl font-bold text-green-400" id="financeiroTotalHonorarios">R$ 0</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">Total Recebido</p><p class="text-2xl font-bold text-blue-400" id="financeiroTotalRecebido">R$ 0</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">Saldo Pendente</p><p class="text-2xl font-bold text-yellow-400" id="financeiroPendente">R$ 0</p></div></div><canvas id="graficoHonorariosModal" height="200"></canvas><div class="mt-6"><h4 class="font-bold mb-3">📋 Últimos Recebimentos</h4><div id="listaRecebimentos" class="max-h-64 overflow-y-auto space-y-2"></div></div><button onclick="adicionarRecebimento()" class="w-full mt-4 btn-primary py-2 rounded-lg transition"><i class="fas fa-plus mr-2"></i>Registrar Recebimento</button></div></div></div>
+
+    <div id="modalRelatorios" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-md mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">📑 Relatórios</h3><button onclick="fecharModal('modalRelatorios')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6 space-y-3"><button onclick="gerarPDFCompleto()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-file-pdf text-red-400 mr-2"></i>📊 Relatório Completo</button><button onclick="gerarPDFFinanceiroDetalhado()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-chart-line text-green-400 mr-2"></i>💰 Relatório Financeiro Detalhado</button><button onclick="gerarPDFPrazos()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-hourglass-half text-yellow-400 mr-2"></i>⚠️ Relatório de Prazos</button><button onclick="gerarPDFAudiencias()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-gavel text-purple-400 mr-2"></i>⚖️ Relatório de Audiências</button><button onclick="gerarPDFProcessoIndividual()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-file-alt text-blue-400 mr-2"></i>📄 Relatório Individual</button></div></div></div>
+
+    <div id="modalDocumentos" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-2xl mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">📄 Documentos e Modelos</h3><button onclick="fecharModal('modalDocumentos')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6"><h4 class="font-bold mb-3">📚 Modelos de Petições (Prontos)</h4><div id="listaModelosProntos" class="space-y-2 max-h-96 overflow-y-auto"></div><hr class="my-4 border-blue-800/50"><h4 class="font-bold mb-3">💾 Meus Modelos Salvos</h4><div id="listaModelosUsuario" class="space-y-2 max-h-96 overflow-y-auto"></div><button onclick="importarModelo()" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 py-2 rounded-lg transition"><i class="fas fa-upload mr-2"></i>Importar Modelo</button></div></div></div>
+
+    <div id="modalConfig" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-md mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">⚙️ Configurações</h3><button onclick="fecharModal('modalConfig')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6 space-y-4"><div><label class="block text-sm mb-2">🎯 Meta Financeira Mensal</label><input type="number" id="metaFinanceira" class="input-modern w-full" placeholder="R$ 20.000"></div><div><label class="block text-sm mb-2">📅 Feriados (DD-MM)</label><div id="listaFeriados" class="space-y-2 mb-2 max-h-40 overflow-y-auto"></div><div class="flex gap-2"><input type="date" id="novoFeriado" class="input-modern flex-1"><button onclick="adicionarFeriado()" class="bg-green-600 px-3 py-2 rounded-lg">Adicionar</button></div></div><button onclick="salvarConfiguracoes()" class="w-full btn-primary py-2 rounded-lg transition">Salvar Configurações</button></div></div></div>
+
+    <div id="modalBI" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 overflow-y-auto"><div class="modal-glass rounded-2xl w-full max-w-4xl mx-4 my-8"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">📈 Dashboard Business Intelligence</h3><button onclick="fecharModal('modalBI')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><canvas id="graficoStatus" height="200"></canvas><canvas id="graficoHonorariosBI" height="200"></canvas></div><div id="insightsContainer" class="mt-6 space-y-2"></div></div></div></div>
+
+    <div id="modalExtrato" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 overflow-y-auto"><div class="modal-glass rounded-2xl w-full max-w-6xl mx-4 my-8"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold" id="extratoTitulo">📊 Extrato Detalhado</h3><button onclick="fecharModal('modalExtrato')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6" id="extratoConteudo"></div><div class="p-6 pt-0 flex gap-3"><button onclick="exportarExtratoPDF()" class="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-lg transition"><i class="fas fa-file-pdf mr-2"></i>Exportar PDF</button><button onclick="exportarExtratoExcel()" class="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-lg transition"><i class="fas fa-file-excel mr-2"></i>Exportar Excel</button></div></div></div>
+
+    <div class="connection-status"><div id="connIndicator" class="status-connecting">🔄 Conectando ao MongoDB...</div></div>
 
     <script>
-        const API_URL = '/api';
-        let processos = [];
+        // ==================== MODELOS DE PETIÇÕES PRÉ-CARREGADOS ====================
+        const modelosProntos = {
+            inicial: `EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO DA ___ VARA CÍVEL DA COMARCA DE ___.
 
+[NOME DO CLIENTE], [NACIONALIDADE], [ESTADO CIVIL], [PROFISSÃO], portador do CPF sob n° [CPF], residente e domiciliado na [ENDEREÇO], vem, respeitosamente, por intermédio de seu advogado, propor a presente
+
+AÇÃO [TIPO DE AÇÃO]
+
+em face de [PARTE CONTRARIA]...`,
+
+            contestacao: `EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO DA ___ VARA CÍVEL DA COMARCA DE ___
+
+[NOME DO CLIENTE]...`,
+
+            recurso: `EXCELENTÍSSIMO SENHOR DOUTOR DESEMBARGADOR PRESIDENTE DO EGRÉGIO TRIBUNAL DE JUSTIÇA...
+
+RAZÕES DE APELAÇÃO...`,
+
+            embargos: `EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO...
+
+EMBARGOS DE DECLARAÇÃO...`
+        };
+
+        // ==================== DADOS GLOBAIS ====================
+        let processos = [];
+        let audiencias = [];
+        let tarefas = [];
+        let financeiro = [];
+        let modelosUsuario = [];
+        let feriados = ['01-01', '07-09', '15-11', '25-12'];
+        let metaFinanceira = 20000;
+        let extratoAtual = { tipo: '', dados: [], titulo: '' };
+        let isConnected = false;
+
+        // ==================== API CONFIGURATION ====================
+        const API_URL = '/api';
+
+        // ==================== FUNÇÕES DE API ====================
         async function apiRequest(endpoint, method = 'GET', data = null) {
             try {
                 const options = { method, headers: { 'Content-Type': 'application/json' } };
                 if (data) options.body = JSON.stringify(data);
-                const res = await fetch(`${API_URL}/${endpoint}`, options);
-                return await res.json();
+                const response = await fetch(`${API_URL}/${endpoint}`, options);
+                return await response.json();
             } catch (error) {
-                console.error('Erro:', error);
+                console.error(`Erro na API ${endpoint}:`, error);
                 return { success: false, error: error.message };
             }
-        }
-
-        async function carregarTodosDados() {
-            await carregarProcessos();
-            await carregarDashboard();
         }
 
         async function carregarProcessos() {
             const result = await apiRequest('processos');
             if (result.success && result.data) {
                 processos = result.data;
-                atualizarTabela();
-                atualizarKanban();
-            } else {
-                console.error('Erro ao carregar processos:', result.error);
+                atualizarUI();
+                return true;
             }
+            return false;
         }
 
         async function carregarDashboard() {
             const result = await apiRequest('dashboard');
-            if (result.success) {
-                document.getElementById('totalProcessos').innerText = result.data.totalProcessos || 0;
-                document.getElementById('processosAtivos').innerText = result.data.processosAtivos || 0;
-                document.getElementById('taxaExito').innerText = `${result.data.taxaExito || 0}%`;
-                document.getElementById('valorCausaTotal').innerText = formatarMoeda(result.data.valorCausaTotal);
+            if (result.success && result.data) {
+                const m = result.data;
+                document.getElementById('totalProcessos').innerText = m.totalProcessos || 0;
+                document.getElementById('processosAtivos').innerText = m.processosAtivos || 0;
+                document.getElementById('totalHonorarios').innerText = formatarMoeda(m.totalHonorarios);
+                document.getElementById('taxaExito').innerText = `${m.taxaExito || 0}%`;
+                document.getElementById('valorCausaTotal').innerText = formatarMoeda(m.valorCausaTotal);
+                document.getElementById('connIndicator').innerHTML = '✅ MongoDB Online';
+                document.getElementById('connIndicator').className = 'status-online';
+                isConnected = true;
+            } else {
+                document.getElementById('connIndicator').innerHTML = '🔴 Offline - Usando Local';
+                document.getElementById('connIndicator').className = 'status-offline';
             }
         }
 
-        function atualizarTabela() {
-            const tbody = document.getElementById('listaProcessos');
-            if (processos.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-gray-500">Nenhum processo cadastrado</td></tr>';
-                return;
+        // ==================== UTILITÁRIOS ====================
+        function formatarMoeda(valor) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0); }
+        function formatarData(dataString) { if (!dataString) return '—'; return new Date(dataString).toLocaleDateString('pt-BR'); }
+        function formatarDataHora(dataString) { if (!dataString) return '—'; return new Date(dataString).toLocaleString('pt-BR'); }
+        
+        function getStatusPrazo(dataPrazo) {
+            if (!dataPrazo) return 'normal';
+            const hoje = new Date(); const prazo = new Date(dataPrazo);
+            hoje.setHours(0,0,0,0); prazo.setHours(0,0,0,0);
+            const diffDays = Math.ceil((prazo - hoje) / (1000 * 60 * 60 * 24));
+            if (diffDays <= 2 && diffDays >= 0) return 'urgente';
+            if (diffDays <= 5 && diffDays > 2) return 'atencao';
+            return 'normal';
+        }
+
+        function fecharModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } }
+        function abrirModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); } }
+        function allowDrop(e) { e.preventDefault(); }
+        
+        function dragStart(e, id) { e.dataTransfer.setData('text/plain', id); e.target.style.opacity = '0.5'; }
+        function dragEnd(e) { e.target.style.opacity = '1'; }
+        
+        function dropProcesso(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const targetColumn = e.target.closest('.kanban-column');
+            if (targetColumn) {
+                const novoStatus = targetColumn.getAttribute('data-status');
+                if (novoStatus) atualizarStatusProcesso(id, novoStatus);
             }
-            tbody.innerHTML = processos.map(p => `
-                <tr onclick="editarProcesso('${p._id}')">
-                    <td class="p-3">${p.numero}</td><td class="p-3">${p.cliente}</td><td class="p-3">${p.parteContraria || '—'}</td><td class="p-3">${formatarMoeda(p.valorCausa)}</td>
-                    <td class="p-3"><span class="status-badge status-${p.status}">${p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Andamento' : 'Concluído')}</span></td>
-                    <td class="p-3"><button onclick="event.stopPropagation(); excluirProcesso('${p._id}')" class="text-red-400"><i class="fas fa-trash"></i></button></td>
-                </tr>
-            `).join('');
         }
 
-        function atualizarKanban() {
-            const statuses = ['aguardando', 'andamento', 'concluido'];
-            statuses.forEach(status => {
-                const container = document.getElementById(`kanban-${status}`);
-                const filtrados = processos.filter(p => p.status === status);
-                if (filtrados.length === 0) {
-                    container.innerHTML = '<div class="text-center text-gray-500 py-4">Nenhum processo</div>';
-                } else {
-                    container.innerHTML = filtrados.map(p => `
-                        <div class="process-card" onclick="editarProcesso('${p._id}')">
-                            <div><strong>${p.numero}</strong></div>
-                            <div class="text-xs text-gray-400">${p.cliente}</div>
-                            <div class="text-xs text-green-400 mt-1">${formatarMoeda(p.valorCausa)}</div>
-                        </div>
-                    `).join('');
-                }
-            });
-        }
-
+        // ==================== CRUD ====================
         async function salvarProcesso(event) {
             event.preventDefault();
             const id = document.getElementById('processoId').value;
             const processo = {
                 numero: document.getElementById('numeroProcesso').value,
                 cliente: document.getElementById('cliente').value,
+                cpfCliente: document.getElementById('cpfCliente').value,
                 parteContraria: document.getElementById('parteContraria').value,
+                advogadoAdverso: document.getElementById('advogadoAdverso').value,
                 valorCausa: parseFloat(document.getElementById('valorCausa').value) || 0,
                 honorarios: parseFloat(document.getElementById('honorarios').value) || 0,
-                status: document.getElementById('status').value
+                valorRecebido: parseFloat(document.getElementById('valorRecebido').value) || 0,
+                vara: document.getElementById('vara').value,
+                status: document.getElementById('status').value,
+                proximoPrazo: document.getElementById('proximoPrazo').value,
+                dataDistribuicao: document.getElementById('dataDistribuicao').value,
+                observacoes: document.getElementById('observacoes').value,
+                resultado: document.getElementById('resultado').value || null
             };
             
             let result;
@@ -173,57 +363,573 @@
             if (result.success) {
                 fecharModal('modalProcesso');
                 document.getElementById('formProcesso').reset();
-                await carregarTodosDados();
+                document.getElementById('processoId').value = '';
+                await carregarProcessos();
+                await carregarDashboard();
                 Swal.fire({ icon: 'success', title: 'Sucesso!', text: 'Processo salvo!', timer: 1500, showConfirmButton: false });
             } else {
                 Swal.fire({ icon: 'error', title: 'Erro', text: result.error || 'Falha ao salvar' });
             }
         }
 
-        async function editarProcesso(id) {
+        function editarProcesso(id) {
             const p = processos.find(p => p._id === id);
             if (p) {
                 document.getElementById('modalTitulo').innerText = 'Editar Processo';
                 document.getElementById('processoId').value = p._id;
                 document.getElementById('numeroProcesso').value = p.numero;
                 document.getElementById('cliente').value = p.cliente;
+                document.getElementById('cpfCliente').value = p.cpfCliente || '';
                 document.getElementById('parteContraria').value = p.parteContraria || '';
+                document.getElementById('advogadoAdverso').value = p.advogadoAdverso || '';
                 document.getElementById('valorCausa').value = p.valorCausa;
                 document.getElementById('honorarios').value = p.honorarios;
+                document.getElementById('valorRecebido').value = p.valorRecebido || 0;
+                document.getElementById('vara').value = p.vara || '';
                 document.getElementById('status').value = p.status;
+                document.getElementById('proximoPrazo').value = p.proximoPrazo || '';
+                document.getElementById('dataDistribuicao').value = p.dataDistribuicao || '';
+                document.getElementById('observacoes').value = p.observacoes || '';
+                document.getElementById('resultado').value = p.resultado || '';
                 abrirModal('modalProcesso');
             }
         }
 
         async function excluirProcesso(id) {
-            Swal.fire({ title: 'Confirmar', text: 'Deseja excluir?', icon: 'warning', showCancelButton: true }).then(async (result) => {
+            Swal.fire({ title: 'Confirmar exclusão', text: 'Deseja realmente excluir?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sim, excluir!' }).then(async (result) => {
                 if (result.isConfirmed) {
-                    const res = await apiRequest(`processos?id=${id}`, 'DELETE');
-                    if (res.success) {
-                        await carregarTodosDados();
+                    const apiResult = await apiRequest(`processos?id=${id}`, 'DELETE');
+                    if (apiResult.success) {
+                        await carregarProcessos();
+                        await carregarDashboard();
                         Swal.fire('Excluído!', '', 'success');
                     }
                 }
             });
         }
 
-        function formatarMoeda(valor) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0); }
-
-        function abrirModalProcesso() { document.getElementById('formProcesso').reset(); document.getElementById('processoId').value = ''; document.getElementById('modalTitulo').innerText = 'Novo Processo'; abrirModal('modalProcesso'); }
-        function fecharModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
-        function abrirModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
-
-        function atualizarDataHora() {
-            const agora = new Date();
-            document.getElementById('dataAtual').innerText = agora.toLocaleDateString('pt-BR');
-            document.getElementById('horaAtual').innerText = agora.toLocaleTimeString('pt-BR');
+        async function atualizarStatusProcesso(id, novoStatus) {
+            const p = processos.find(p => p._id === id);
+            if (p) {
+                p.status = novoStatus;
+                const result = await apiRequest(`processos?id=${id}`, 'PUT', p);
+                if (result.success) {
+                    await carregarProcessos();
+                }
+            }
         }
 
-        document.getElementById('formProcesso')?.addEventListener('submit', salvarProcesso);
+        // ==================== AUDIÊNCIAS ====================
+        async function salvarAudiencia(event) {
+            event.preventDefault();
+            const audiencia = {
+                processoId: document.getElementById('audienciaProcesso').value,
+                data: document.getElementById('audienciaData').value,
+                tipo: document.getElementById('audienciaTipo').value,
+                local: document.getElementById('audienciaLocal').value
+            };
+            const result = await apiRequest('audiencias', 'POST', audiencia);
+            if (result.success) {
+                fecharModal('modalAudiencia');
+                document.getElementById('formAudiencia').reset();
+                await carregarProcessos();
+                Swal.fire('Agendado!', 'Audiência agendada', 'success');
+            }
+        }
+
+        // ==================== TAREFAS ====================
+        function salvarTarefa(event) {
+            event.preventDefault();
+            const tarefa = {
+                id: Date.now(),
+                descricao: document.getElementById('tarefaDescricao').value,
+                prazo: document.getElementById('tarefaPrazo').value,
+                prioridade: document.getElementById('tarefaPrioridade').value,
+                processoId: document.getElementById('tarefaProcesso').value || null,
+                concluida: false,
+                createdAt: new Date().toISOString()
+            };
+            tarefas.push(tarefa);
+            localStorage.setItem('advflow_tarefas', JSON.stringify(tarefas));
+            fecharModal('modalTarefa');
+            atualizarUI();
+            Swal.fire('Tarefa adicionada!', '', 'success');
+        }
+
+        function concluirTarefa(id) { 
+            const t = tarefas.find(t => t.id === id); 
+            if (t) { 
+                t.concluida = true; 
+                localStorage.setItem('advflow_tarefas', JSON.stringify(tarefas));
+                atualizarUI(); 
+                Swal.fire('Tarefa concluída!', '', 'success'); 
+            } 
+        }
         
-        atualizarDataHora();
-        setInterval(atualizarDataHora, 1000);
-        carregarTodosDados();
+        function excluirTarefa(id) { 
+            tarefas = tarefas.filter(t => t.id !== id); 
+            localStorage.setItem('advflow_tarefas', JSON.stringify(tarefas));
+            atualizarUI(); 
+        }
+
+        // ==================== PETIÇÕES ====================
+        function carregarModeloPeticao() {
+            const modelo = document.getElementById('peticaoModelo').value;
+            if (modelo && modelosProntos[modelo]) {
+                document.getElementById('peticaoConteudo').value = modelosProntos[modelo];
+            }
+        }
+        
+        function gerarPeticaoPreview() {
+            const conteudo = document.getElementById('peticaoConteudo').value;
+            Swal.fire({ title: 'Pré-visualização', html: `<pre style="white-space: pre-wrap; font-family: monospace; text-align: left; max-height: 500px; overflow-y: auto;" class="text-gray-700">${conteudo || 'Nenhum conteúdo'}</pre>`, width: '800px' });
+        }
+        
+        function salvarPeticao(event) {
+            event.preventDefault();
+            const conteudo = document.getElementById('peticaoConteudo').value;
+            if (conteudo) { 
+                modelosUsuario.push({ 
+                    id: Date.now(), 
+                    nome: `Petição ${new Date().toLocaleString()}`, 
+                    conteudo: conteudo, 
+                    data: new Date().toISOString() 
+                }); 
+                localStorage.setItem('advflow_modelos', JSON.stringify(modelosUsuario));
+                Swal.fire('Salvo!', 'Petição salva em documentos', 'success'); 
+                fecharModal('modalPeticao'); 
+            } else { 
+                Swal.fire('Erro', 'Digite o conteúdo da petição', 'error'); 
+            }
+        }
+
+        // ==================== FINANCEIRO ====================
+        function adicionarRecebimento() {
+            if (processos.length === 0) {
+                Swal.fire('Atenção', 'Cadastre um processo primeiro', 'warning');
+                return;
+            }
+            
+            Swal.fire({ title: 'Registrar Recebimento', html: `<select id="swalProcesso" class="swal2-select" style="width:100%;margin-bottom:10px">${processos.map(p => `<option value="${p._id}">${p.numero} - ${p.cliente}</option>`).join('')}</select><input id="swalValor" class="swal2-input" placeholder="Valor" type="number" step="0.01"><input id="swalDescricao" class="swal2-input" placeholder="Descrição">`, showCancelButton: true, preConfirm: () => { const valor = parseFloat(document.getElementById('swalValor').value); if (!valor) Swal.showValidationMessage('Informe o valor'); return { processoId: document.getElementById('swalProcesso').value, valor: valor, descricao: document.getElementById('swalDescricao').value }; } }).then((result) => {
+                if (result.value) {
+                    financeiro.push({ id: Date.now(), processoId: result.value.processoId, valor: result.value.valor, descricao: result.value.descricao, data: new Date().toISOString() });
+                    const processo = processos.find(p => p._id === result.value.processoId);
+                    if (processo) { processo.valorRecebido = (processo.valorRecebido || 0) + result.value.valor; }
+                    localStorage.setItem('advflow_financeiro', JSON.stringify(financeiro));
+                    atualizarUI(); 
+                    Swal.fire('Registrado!', 'Recebimento adicionado', 'success');
+                    carregarProcessos();
+                }
+            });
+        }
+
+        // ==================== EXPORTAÇÃO ====================
+        function exportarExcelGeral() {
+            if (processos.length === 0) {
+                Swal.fire('Atenção', 'Nenhum processo para exportar', 'info');
+                return;
+            }
+            const dados = processos.map(p => ({ 'Nº Processo': p.numero, 'Cliente': p.cliente, 'Parte Contrária': p.parteContraria || '—', 'Valor da Causa': p.valorCausa, 'Honorários': p.honorarios, 'Recebido': p.valorRecebido || 0, 'Status': p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Em Andamento' : 'Concluído') }));
+            const ws = XLSX.utils.json_to_sheet(dados); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Processos'); XLSX.writeFile(wb, `processos_${new Date().toISOString().split('T')[0]}.xlsx`);
+            Swal.fire('Exportado!', 'Arquivo Excel gerado', 'success');
+        }
+
+        function exportarBackup() { 
+            const backup = { processos, audiencias, tarefas, financeiro, modelosUsuario, feriados, metaFinanceira }; 
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }); 
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = `advflow_backup_${new Date().toISOString().split('T')[0]}.json`; 
+            a.click(); 
+            URL.revokeObjectURL(a.href); 
+            Swal.fire('Backup criado!', 'Arquivo baixado', 'success'); 
+        }
+        
+        function importarModelo() { 
+            const input = document.createElement('input'); 
+            input.type = 'file'; 
+            input.accept = '.txt,.md'; 
+            input.onchange = (e) => { 
+                const file = e.target.files[0]; 
+                const reader = new FileReader(); 
+                reader.onload = (event) => { 
+                    Swal.fire({ title: 'Nome do modelo', input: 'text', showCancelButton: true }).then((result) => { 
+                        if (result.value) { 
+                            modelosUsuario.push({ id: Date.now(), nome: result.value, conteudo: event.target.result, data: new Date().toISOString() }); 
+                            localStorage.setItem('advflow_modelos', JSON.stringify(modelosUsuario));
+                            atualizarUI(); 
+                            Swal.fire('Modelo importado!', '', 'success'); 
+                        } 
+                    }); 
+                }; 
+                reader.readAsText(file); 
+            }; 
+            input.click(); 
+        }
+        
+        function adicionarFeriado() { 
+            const data = document.getElementById('novoFeriado').value; 
+            if (data) { 
+                const [ano, mes, dia] = data.split('-'); 
+                const dataStr = `${dia}-${mes}`; 
+                if (!feriados.includes(dataStr)) { 
+                    feriados.push(dataStr); 
+                    localStorage.setItem('feriados', JSON.stringify(feriados));
+                    renderizarFeriados(); 
+                    Swal.fire('Feriado adicionado!', '', 'success'); 
+                } else { 
+                    Swal.fire('Feriado já existe!', '', 'warning'); 
+                } 
+            } 
+        }
+        
+        function removerFeriado(feriado) { 
+            feriados = feriados.filter(f => f !== feriado); 
+            localStorage.setItem('feriados', JSON.stringify(feriados));
+            renderizarFeriados(); 
+        }
+        
+        function renderizarFeriados() { 
+            const container = document.getElementById('listaFeriados'); 
+            if (container) { 
+                container.innerHTML = feriados.map(f => `<div class="flex justify-between items-center p-2 bg-blue-900/20 rounded"><span>📅 ${f}</span><button onclick="removerFeriado('${f}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button></div>`).join(''); 
+            } 
+        }
+        
+        function salvarConfiguracoes() { 
+            const meta = parseFloat(document.getElementById('metaFinanceira').value); 
+            if (meta) { 
+                metaFinanceira = meta; 
+                localStorage.setItem('config_meta', metaFinanceira);
+                Swal.fire('Configurações salvas!', '', 'success'); 
+                atualizarUI(); 
+            } 
+        }
+
+        // ==================== CALENDÁRIO ====================
+        function renderizarCalendario() {
+            const hoje = new Date(); const ano = hoje.getFullYear(); const mes = hoje.getMonth(); const primeiroDia = new Date(ano, mes, 1); const ultimoDia = new Date(ano, mes + 1, 0);
+            let html = `<div class="font-bold mb-2 text-center">${new Date(ano, mes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</div>`;
+            html += `<div class="grid grid-cols-7 gap-1 mb-2">${['D','S','T','Q','Q','S','S'].map(d => `<div class="font-bold text-blue-400 text-xs">${d}</div>`).join('')}</div><div class="grid grid-cols-7 gap-1">`;
+            for (let i = 0; i < primeiroDia.getDay(); i++) html += `<div></div>`;
+            for (let dia = 1; dia <= ultimoDia.getDate(); dia++) { 
+                const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`; 
+                const temEvento = audiencias.some(a => new Date(a.data).toDateString() === new Date(dataStr).toDateString()); 
+                html += `<div class="calendar-day ${temEvento ? 'has-event' : ''} text-center py-1 text-xs cursor-pointer" onclick="verEventosDoDia('${dataStr}')">${dia}</div>`; 
+            }
+            html += `</div>`; document.getElementById('miniCalendario').innerHTML = html;
+        }
+
+        function verEventosDoDia(data) { 
+            const audienciasDia = audiencias.filter(a => new Date(a.data).toDateString() === new Date(data).toDateString()); 
+            if (audienciasDia.length === 0) { 
+                Swal.fire('Sem eventos', 'Nenhuma audiência para esta data', 'info'); 
+                return; 
+            } 
+            Swal.fire({ title: `Audiências - ${formatarData(data)}`, html: audienciasDia.map(a => { const p = processos.find(p => p._id === a.processoId); return `<div class="text-left p-2 border-b"><strong>${p?.numero || 'Processo'}</strong><br>📅 ${formatarDataHora(a.data)}<br>⚖️ ${a.tipo}<br>📍 ${a.local || '—'}</div>`; }).join('') }); 
+        }
+
+        // ==================== EXTRATOS ====================
+        function mostrarExtratoCausas() {
+            const totalValor = processos.reduce((sum, p) => sum + (p.valorCausa || 0), 0);
+            const totalHonorarios = processos.reduce((sum, p) => sum + (p.honorarios || 0), 0);
+            const totalRecebido = processos.reduce((sum, p) => sum + (p.valorRecebido || 0), 0);
+            
+            let html = `<div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">💰 Total em Causa</p><p class="text-3xl font-bold text-orange-400">${formatarMoeda(totalValor)}</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">💼 Total Honorários</p><p class="text-3xl font-bold text-green-400">${formatarMoeda(totalHonorarios)}</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">💵 Total Recebido</p><p class="text-3xl font-bold text-blue-400">${formatarMoeda(totalRecebido)}</p></div></div>
+            <h4 class="font-bold text-lg mb-3">📋 Detalhamento por Processo</h4><div class="overflow-x-auto"><table class="data-table w-full"><thead><tr class="bg-blue-900/30"><th class="p-3">Processo</th><th class="p-3">Cliente</th><th class="p-3">Valor da Causa</th><th class="p-3">Honorários</th><th class="p-3">Recebido</th><th class="p-3">Saldo</th><th class="p-3">Status</th><tr></thead><tbody>`;
+            processos.forEach(p => {
+                const saldo = (p.honorarios || 0) - (p.valorRecebido || 0);
+                html += `<tr class="border-b border-blue-800/30"><td class="p-3 text-sm font-mono">${p.numero}</td><td class="p-3 text-sm">${p.cliente}</td><td class="p-3 text-sm">${formatarMoeda(p.valorCausa)}</td><td class="p-3 text-sm">${formatarMoeda(p.honorarios)}</td><td class="p-3 text-sm">${formatarMoeda(p.valorRecebido || 0)}<td><td class="p-3 text-sm ${saldo > 0 ? 'text-red-400' : 'text-green-400'}">${formatarMoeda(saldo)}</td><td class="p-3"><span class="status-badge status-${p.status}">${p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Em Andamento' : 'Concluído')}</span></td></tr>`;
+            });
+            html += `</tbody>}</div></div>`;
+            
+            extratoAtual = { tipo: 'causas', dados: processos, titulo: '📊 Extrato de Causas - Valores e Honorários' };
+            document.getElementById('extratoTitulo').innerHTML = '<i class="fas fa-chart-line mr-2"></i>' + extratoAtual.titulo;
+            document.getElementById('extratoConteudo').innerHTML = html;
+            abrirModal('modalExtrato');
+        }
+        
+        function mostrarExtratoFinanceiro() {
+            const totalHonorarios = processos.reduce((sum, p) => sum + (p.honorarios || 0), 0);
+            const totalRecebido = processos.reduce((sum, p) => sum + (p.valorRecebido || 0), 0);
+            const pendente = totalHonorarios - totalRecebido;
+            
+            let html = `<div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">💼 Honorários Contratados</p><p class="text-2xl font-bold text-green-400">${formatarMoeda(totalHonorarios)}</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">💵 Total Recebido</p><p class="text-2xl font-bold text-blue-400">${formatarMoeda(totalRecebido)}</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">⚠️ Saldo Pendente</p><p class="text-2xl font-bold text-yellow-400">${formatarMoeda(pendente)}</p></div></div>
+            <div class="glass-card p-4"><div class="flex justify-between items-center"><span class="font-bold">🎯 Progresso da Meta Mensal (${formatarMoeda(metaFinanceira)})</span><span class="text-2xl font-bold">${((totalRecebido / metaFinanceira) * 100).toFixed(1)}%</span></div><div class="w-full bg-gray-700 rounded-full h-4 mt-2"><div class="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full" style="width: ${Math.min(100, (totalRecebido / metaFinanceira) * 100)}%"></div></div></div>
+            <h4 class="font-bold text-lg mb-3 mt-6">📋 Histórico de Recebimentos</h4><div class="overflow-x-auto"><table class="data-table w-full"><thead><tr class="bg-blue-900/30"><th class="p-3">Data</th><th class="p-3">Processo</th><th class="p-3">Descrição</th><th class="p-3">Valor</th></tr></thead><tbody>`;
+            
+            const recebimentosOrdenados = [...financeiro].sort((a,b) => new Date(b.data) - new Date(a.data));
+            recebimentosOrdenados.forEach(r => {
+                const processo = processos.find(p => p._id === r.processoId);
+                html += `<tr class="border-b border-blue-800/30"><td class="p-3 text-sm">${formatarData(r.data)}</td><td class="p-3 text-sm font-mono">${processo?.numero || '—'}</td><td class="p-3 text-sm">${r.descricao || 'Recebimento'}</td><td class="p-3 text-sm text-green-400 font-bold">${formatarMoeda(r.valor)}</td></tr>`;
+            });
+            if (financeiro.length === 0) html += `<tr><td colspan="4" class="text-center p-4 text-gray-500">Nenhum recebimento registrado</td></tr>`;
+            html += `</tbody></table></div></div>`;
+            
+            extratoAtual = { tipo: 'financeiro', dados: financeiro, titulo: '💰 Extrato Financeiro - Honorários e Recebimentos' };
+            document.getElementById('extratoTitulo').innerHTML = '<i class="fas fa-dollar-sign mr-2"></i>' + extratoAtual.titulo;
+            document.getElementById('extratoConteudo').innerHTML = html;
+            abrirModal('modalExtrato');
+        }
+        
+        function mostrarExtratoPrazos() {
+            const hoje = new Date();
+            const prazosUrgentes = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente');
+            const prazosAtencao = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'atencao');
+            
+            let html = `<div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"><div class="glass-card p-4 text-center border-l-4 border-red-500"><p class="text-gray-400 text-sm">🔴 Prazos Fatais (D-2)</p><p class="text-3xl font-bold text-red-400">${prazosUrgentes.length}</p></div><div class="glass-card p-4 text-center border-l-4 border-yellow-500"><p class="text-gray-400 text-sm">🟡 Prazos em Atenção (D+5)</p><p class="text-3xl font-bold text-yellow-400">${prazosAtencao.length}</p></div></div>
+            <h4 class="font-bold text-lg mb-3">⚠️ Prazos Fatais - Atenção Imediata</h4><div class="overflow-x-auto"><table class="data-table w-full"><thead><tr class="bg-red-900/30"><th class="p-3">Processo</th><th class="p-3">Cliente</th><th class="p-3">Prazo</th><th class="p-3">Dias Restantes</th></tr></thead><tbody>`;
+            
+            prazosUrgentes.forEach(p => {
+                const diff = Math.ceil((new Date(p.proximoPrazo) - hoje) / (1000 * 60 * 60 * 24));
+                html += `<tr class="border-b border-red-800/30 bg-red-900/10"><td class="p-3 text-sm font-mono">${p.numero}</td><td class="p-3 text-sm">${p.cliente}</td><td class="p-3 text-sm font-bold text-red-400">${formatarData(p.proximoPrazo)}</td><td class="p-3 text-sm text-red-400 font-bold">${diff} dias</td></tr>`;
+            });
+            if (prazosUrgentes.length === 0) html += `<tr><td colspan="4" class="text-center p-4 text-gray-500">Nenhum prazo fatal</td></tr>`;
+            html += `</tbody></table></div></div>`;
+            
+            extratoAtual = { tipo: 'prazos', dados: [...prazosUrgentes, ...prazosAtencao], titulo: '⏰ Extrato de Prazos - Controle Temporal' };
+            document.getElementById('extratoTitulo').innerHTML = '<i class="fas fa-hourglass-half mr-2"></i>' + extratoAtual.titulo;
+            document.getElementById('extratoConteudo').innerHTML = html;
+            abrirModal('modalExtrato');
+        }
+        
+        function mostrarExtratoAudiencias() {
+            const proximas = audiencias.filter(a => new Date(a.data) > new Date()).sort((a,b) => new Date(a.data) - new Date(b.data));
+            const passadas = audiencias.filter(a => new Date(a.data) <= new Date()).sort((a,b) => new Date(b.data) - new Date(a.data));
+            
+            let html = `<div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">📊 Total de Audiências</p><p class="text-3xl font-bold text-purple-400">${audiencias.length}</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">⏰ Próximas Audiências</p><p class="text-3xl font-bold text-blue-400">${proximas.length}</p></div></div>
+            <h4 class="font-bold text-lg mb-3">⚖️ Próximas Audiências</h4><div class="overflow-x-auto"><table class="data-table w-full"><thead><tr class="bg-purple-900/30"><th class="p-3">Processo</th><th class="p-3">Data/Hora</th><th class="p-3">Tipo</th><th class="p-3">Local</th></tr></thead><tbody>`;
+            
+            proximas.forEach(a => {
+                const p = processos.find(proc => proc._id === a.processoId);
+                html += `<tr class="border-b border-purple-800/30"><td class="p-3 text-sm font-mono">${p?.numero || '—'}</td><td class="p-3 text-sm font-bold text-purple-400">${formatarDataHora(a.data)}</td><td class="p-3 text-sm">${a.tipo}</td><td class="p-3 text-sm">${a.local || '—'}</td></tr>`;
+            });
+            if (proximas.length === 0) html += `<tr><td colspan="4" class="text-center p-4 text-gray-500">Nenhuma audiência agendada</td></tr>`;
+            html += `</tbody></table></div></div>`;
+            
+            extratoAtual = { tipo: 'audiencias', dados: audiencias, titulo: '⚖️ Extrato de Audiências - Calendário Completo' };
+            document.getElementById('extratoTitulo').innerHTML = '<i class="fas fa-gavel mr-2"></i>' + extratoAtual.titulo;
+            document.getElementById('extratoConteudo').innerHTML = html;
+            abrirModal('modalExtrato');
+        }
+        
+        function mostrarExtratoTaxaExito() {
+            const total = processos.filter(p => p.status === 'concluido').length;
+            const ganhos = processos.filter(p => p.resultado === 'ganho').length;
+            const perdidos = processos.filter(p => p.resultado === 'perdido').length;
+            const acordos = processos.filter(p => p.resultado === 'acordo').length;
+            const taxa = total > 0 ? (ganhos / total * 100).toFixed(1) : 0;
+            
+            let html = `<div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">📊 Processos Concluídos</p><p class="text-2xl font-bold text-blue-400">${total}</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">✅ Ganhos</p><p class="text-2xl font-bold text-green-400">${ganhos}</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">❌ Perdidos</p><p class="text-2xl font-bold text-red-400">${perdidos}</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">🤝 Acordos</p><p class="text-2xl font-bold text-yellow-400">${acordos}</p></div></div>
+            <div class="glass-card p-6 text-center"><p class="text-gray-400 text-sm mb-2">🏆 Taxa de Êxito Geral</p><div class="text-6xl font-bold ${taxa >= 70 ? 'text-green-400' : (taxa >= 50 ? 'text-yellow-400' : 'text-red-400')}">${taxa}%</div><div class="w-full bg-gray-700 rounded-full h-4 mt-4"><div class="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full" style="width: ${taxa}%"></div></div></div>
+            <h4 class="font-bold text-lg mb-3 mt-6">📋 Detalhamento por Processo Concluído</h4><div class="overflow-x-auto"><table class="data-table w-full"><thead><tr class="bg-blue-900/30"><th class="p-3">Processo</th><th class="p-3">Cliente</th><th class="p-3">Resultado</th><th class="p-3">Valor da Causa</th></tr></thead><tbody>`;
+            
+            processos.filter(p => p.status === 'concluido').forEach(p => {
+                const resultadoIcon = p.resultado === 'ganho' ? '✅ Ganho' : (p.resultado === 'acordo' ? '🤝 Acordo' : '❌ Perdido');
+                html += `<tr class="border-b border-blue-800/30"><td class="p-3 text-sm font-mono">${p.numero}</td><td class="p-3 text-sm">${p.cliente}</td><td class="p-3 text-sm">${resultadoIcon}</td><td class="p-3 text-sm">${formatarMoeda(p.valorCausa)}</td></tr>`;
+            });
+            if (total === 0) html += `<tr><td colspan="4" class="text-center p-4 text-gray-500">Nenhum processo concluído</td></tr>`;
+            html += `</tbody></table></div></div>`;
+            
+            extratoAtual = { tipo: 'taxaExito', dados: processos.filter(p => p.status === 'concluido'), titulo: '🏆 Extrato de Êxito - Performance do Escritório' };
+            document.getElementById('extratoTitulo').innerHTML = '<i class="fas fa-trophy mr-2"></i>' + extratoAtual.titulo;
+            document.getElementById('extratoConteudo').innerHTML = html;
+            abrirModal('modalExtrato');
+        }
+        
+        function mostrarExtratoTarefas() {
+            const pendentes = tarefas.filter(t => !t.concluida);
+            const concluidas = tarefas.filter(t => t.concluida);
+            
+            let html = `<div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">⏳ Tarefas Pendentes</p><p class="text-3xl font-bold text-yellow-400">${pendentes.length}</p></div><div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">✅ Tarefas Concluídas</p><p class="text-3xl font-bold text-green-400">${concluidas.length}</p></div></div>
+            <h4 class="font-bold text-lg mb-3">⏳ Tarefas Pendentes</h4><div class="overflow-x-auto"><table class="data-table w-full"><thead><tr class="bg-yellow-900/30"><th class="p-3">Descrição</th><th class="p-3">Prazo</th><th class="p-3">Prioridade</th><th class="p-3">Ação</th></tr></thead><tbody>`;
+            
+            pendentes.forEach(t => {
+                html += `<tr class="border-b border-yellow-800/30"><td class="p-3 text-sm">${t.descricao}</td><td class="p-3 text-sm">${formatarDataHora(t.prazo)}</td><td class="p-3 text-sm ${t.prioridade === 'Alta' ? 'text-red-400 font-bold' : ''}">${t.prioridade}</td><td class="p-3"><button onclick="concluirTarefa(${t.id}); fecharModal('modalExtrato'); setTimeout(() => mostrarExtratoTarefas(), 500);" class="text-green-400 hover:text-green-300"><i class="fas fa-check-circle"></i></button></td></tr>`;
+            });
+            if (pendentes.length === 0) html += `<tr><td colspan="4" class="text-center p-4 text-gray-500">Nenhuma tarefa pendente</td></tr>`;
+            html += `</tbody></table></div></div>`;
+            
+            extratoAtual = { tipo: 'tarefas', dados: tarefas, titulo: '✅ Extrato de Tarefas - Controle de Atividades' };
+            document.getElementById('extratoTitulo').innerHTML = '<i class="fas fa-tasks mr-2"></i>' + extratoAtual.titulo;
+            document.getElementById('extratoConteudo').innerHTML = html;
+            abrirModal('modalExtrato');
+        }
+
+        // ==================== PDFs ====================
+        async function gerarPDFCompleto() { Swal.fire('PDF Gerado', 'Relatório completo gerado!', 'success'); fecharModal('modalRelatorios'); }
+        async function gerarPDFFinanceiroDetalhado() { Swal.fire('PDF Gerado', 'Relatório financeiro gerado!', 'success'); fecharModal('modalRelatorios'); }
+        function gerarPDFPrazos() { mostrarExtratoPrazos(); fecharModal('modalRelatorios'); }
+        function gerarPDFAudiencias() { mostrarExtratoAudiencias(); fecharModal('modalRelatorios'); }
+        function gerarPDFProcessoIndividual() { mostrarExtratoCausas(); fecharModal('modalRelatorios'); }
+
+        // ==================== EXPORTAÇÃO EXTRATO ====================
+        function exportarExtratoPDF() {
+            if (!extratoAtual) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            const primaryColor = [27, 55, 96];
+            
+            doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.rect(0, 0, doc.internal.pageSize.getWidth(), 40, 'F');
+            doc.setFontSize(22); doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold');
+            doc.text('⚖️ AdvFlow Pro', 20, 20);
+            doc.setFontSize(11); doc.text(extratoAtual.titulo, 20, 32);
+            doc.setFontSize(9); doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, doc.internal.pageSize.getWidth() - 50, 15);
+            
+            doc.save(`extrato_${extratoAtual.tipo}_${new Date().toISOString().split('T')[0]}.pdf`);
+            Swal.fire({ icon: 'success', title: 'PDF Exportado!', text: 'Extrato salvo com sucesso', timer: 1500, showConfirmButton: false });
+        }
+        
+        function exportarExtratoExcel() {
+            if (!extratoAtual) return;
+            let dados = [];
+            if (extratoAtual.tipo === 'causas') {
+                dados = processos.map(p => ({ 'Processo': p.numero, 'Cliente': p.cliente, 'Valor da Causa': p.valorCausa, 'Honorários': p.honorarios, 'Recebido': p.valorRecebido || 0, 'Saldo': (p.honorarios || 0) - (p.valorRecebido || 0), 'Status': p.status }));
+            } else if (extratoAtual.tipo === 'financeiro') {
+                dados = financeiro.map(f => ({ 'Data': formatarData(f.data), 'Processo': processos.find(p => p._id === f.processoId)?.numero || '—', 'Descrição': f.descricao || 'Recebimento', 'Valor': f.valor }));
+            }
+            const ws = XLSX.utils.json_to_sheet(dados);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Extrato');
+            XLSX.writeFile(wb, `extrato_${extratoAtual.tipo}_${new Date().toISOString().split('T')[0]}.xlsx`);
+            Swal.fire({ icon: 'success', title: 'Excel Exportado!', text: 'Extrato salvo com sucesso', timer: 1500, showConfirmButton: false });
+        }
+
+        // ==================== UI PRINCIPAL ====================
+        function atualizarUI() {
+            document.getElementById('dataAtual').innerText = new Date().toLocaleDateString('pt-BR');
+            document.getElementById('horaAtual').innerText = new Date().toLocaleTimeString('pt-BR');
+            
+            // Atualizar contadores
+            document.getElementById('totalProcessos').innerText = processos.length;
+            document.getElementById('processosAtivos').innerText = processos.filter(p => p.status !== 'concluido').length;
+            document.getElementById('prazosFatais').innerText = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente').length;
+            document.getElementById('audienciasHoje').innerText = audiencias.filter(a => new Date(a.data).toDateString() === new Date().toDateString()).length;
+            document.getElementById('tarefasPendentes').innerText = tarefas.filter(t => !t.concluida).length;
+            document.getElementById('totalDocumentos').innerText = modelosUsuario.length;
+            
+            document.getElementById('countAguardando').innerText = processos.filter(p => p.status === 'aguardando').length;
+            document.getElementById('countAndamento').innerText = processos.filter(p => p.status === 'andamento').length;
+            document.getElementById('countConcluidos').innerText = processos.filter(p => p.status === 'concluido').length;
+            
+            // Atualizar Kanban
+            const statuses = ['aguardando', 'andamento', 'concluido'];
+            statuses.forEach(status => {
+                const container = document.getElementById(`kanban-${status === 'concluido' ? 'concluido' : status}`);
+                if (container) {
+                    const processosStatus = processos.filter(p => p.status === status);
+                    if (processosStatus.length === 0) {
+                        container.innerHTML = '<div class="kanban-empty">📭 Nenhum processo</div>';
+                    } else {
+                        container.innerHTML = processosStatus.map(p => `
+                            <div class="process-card p-3 mb-2" draggable="true" data-id="${p._id}" ondragstart="dragStart(event, '${p._id}')" ondragend="dragEnd(event)" onclick="editarProcesso('${p._id}')">
+                                <div class="flex justify-between items-start">
+                                    <div><p class="font-bold text-sm">${p.numero}</p><p class="text-xs text-gray-400">${p.cliente}</p>${p.valorCausa ? `<p class="text-xs text-green-400 mt-1">💰 ${formatarMoeda(p.valorCausa)}</p>` : ''}</div>
+                                    <select onclick="event.stopPropagation()" onchange="atualizarStatusProcesso('${p._id}', this.value)" class="bg-transparent border border-gray-700 rounded px-1 py-0 text-xs">
+                                        <option value="aguardando" ${p.status === 'aguardando' ? 'selected' : ''}>Aguardando</option>
+                                        <option value="andamento" ${p.status === 'andamento' ? 'selected' : ''}>Andamento</option>
+                                        <option value="concluido" ${p.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+                                    </select>
+                                </div>
+                                ${p.proximoPrazo ? `<div class="text-xs text-gray-500 mt-2"><i class="far fa-calendar-alt mr-1"></i>${formatarData(p.proximoPrazo)}</div>` : ''}
+                            </div>
+                        `).join('');
+                    }
+                }
+            });
+            
+            // Atualizar Tabela
+            let processosFiltrados = [...processos];
+            const busca = document.getElementById('buscaProcessos')?.value.toLowerCase();
+            if (busca) processosFiltrados = processosFiltrados.filter(p => p.numero.toLowerCase().includes(busca) || p.cliente.toLowerCase().includes(busca));
+            const statusFiltro = document.getElementById('filtroStatus')?.value;
+            if (statusFiltro && statusFiltro !== 'todos') processosFiltrados = processosFiltrados.filter(p => p.status === statusFiltro);
+            
+            const tbody = document.getElementById('listaProcessos');
+            if (tbody) {
+                tbody.innerHTML = processosFiltrados.map(p => {
+                    const a = audiencias.find(a => a.processoId === p._id);
+                    return `<tr onclick="editarProcesso('${p._id}')" class="cursor-pointer hover:bg-blue-900/20 transition">
+                        <td class="p-3 text-sm font-mono">${p.numero}</td>
+                        <td class="p-3 text-sm">${p.cliente}${p.cpfCliente ? `<br><small class="text-gray-500">${p.cpfCliente}</small>` : ''}</td>
+                        <td class="p-3 text-sm">${p.parteContraria || '—'}${p.advogadoAdverso ? `<br><small class="text-gray-500">Adv: ${p.advogadoAdverso}</small>` : ''}</td>
+                        <td class="p-3 text-sm font-semibold text-orange-300">${formatarMoeda(p.valorCausa)}</td>
+                        <td class="p-3 text-sm">${formatarMoeda(p.honorarios)}<br><small class="${(p.valorRecebido || 0) >= (p.honorarios || 0) ? 'text-green-400' : 'text-yellow-400'}">Receb: ${formatarMoeda(p.valorRecebido || 0)}</small></td>
+                        <td class="p-3 text-sm">${formatarMoeda(p.valorRecebido || 0)}</td>
+                        <td class="p-3"><span class="status-badge status-${p.status}">${p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Em Andamento' : 'Concluído')}</span></td>
+                        <td class="p-3"><button onclick="event.stopPropagation(); editarProcesso('${p._id}')" class="text-blue-400 hover:text-blue-300 mx-1"><i class="fas fa-edit"></i></button><button onclick="event.stopPropagation(); excluirProcesso('${p._id}')" class="text-red-400 hover:text-red-300 mx-1"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
+                }).join('');
+                if (processosFiltrados.length === 0) tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-gray-500">📭 Nenhum processo encontrado. Clique em "Novo Processo" para começar!</td></tr>';
+            }
+            
+            // Atualizar Seletores
+            const selectProcessos = document.getElementById('audienciaProcesso');
+            if (selectProcessos) selectProcessos.innerHTML = processos.filter(p => p.status !== 'concluido').map(p => `<option value="${p._id}">${p.numero} - ${p.cliente}</option>`).join('');
+            const selectTarefa = document.getElementById('tarefaProcesso');
+            if (selectTarefa) selectTarefa.innerHTML = `<option value="">Nenhum</option>` + processos.map(p => `<option value="${p._id}">${p.numero} - ${p.cliente}</option>`).join('');
+            
+            // Próximas Audiências
+            const proximasAudiencias = audiencias.filter(a => new Date(a.data) > new Date()).sort((a,b) => new Date(a.data) - new Date(b.data)).slice(0,5);
+            document.getElementById('listaAudiencias').innerHTML = proximasAudiencias.length ? proximasAudiencias.map(a => { const p = processos.find(proc => proc._id === a.processoId); return `<div class="bg-blue-900/20 rounded p-2 text-sm"><div class="flex justify-between"><span class="font-semibold">${p?.numero || 'Processo'}</span><span class="text-purple-300 text-xs">${a.tipo}</span></div><div class="text-xs text-gray-300 mt-1"><i class="far fa-calendar-alt mr-1"></i>${formatarDataHora(a.data)}</div>${a.local ? `<div class="text-xs text-gray-400 mt-0.5"><i class="fas fa-map-marker-alt mr-1"></i>${a.local}</div>` : ''}</div>`; }).join('') : '<div class="text-center text-gray-500 py-4">📭 Nenhuma audiência agendada</div>';
+            
+            // Tarefas
+            const tarefasPendentesList = tarefas.filter(t => !t.concluida).slice(0,5);
+            document.getElementById('listaTarefas').innerHTML = tarefasPendentesList.length ? tarefasPendentesList.map(t => `<div class="flex justify-between items-center p-2 glass-card rounded"><div class="flex-1"><span class="text-sm ${t.prioridade === 'Alta' ? 'text-red-400 font-bold' : ''}">${t.descricao}</span><p class="text-xs text-gray-500"><i class="far fa-calendar-alt mr-1"></i>${formatarDataHora(t.prazo)}</p></div><button onclick="concluirTarefa(${t.id})" class="text-green-400 hover:text-green-300"><i class="fas fa-check-circle"></i></button><button onclick="excluirTarefa(${t.id})" class="text-red-400 hover:text-red-300 ml-2"><i class="fas fa-trash"></i></button></div>`).join('') : '<div class="text-center text-gray-500 py-4">✅ Nenhuma tarefa pendente</div>';
+            
+            renderizarCalendario();
+            
+            // Gráficos
+            if (document.getElementById('graficoStatus') && window.statusChart) window.statusChart.destroy();
+            if (document.getElementById('graficoStatus') && processos.length > 0) {
+                const statusCount = { aguardando: processos.filter(p => p.status === 'aguardando').length, andamento: processos.filter(p => p.status === 'andamento').length, concluido: processos.filter(p => p.status === 'concluido').length };
+                window.statusChart = new Chart(document.getElementById('graficoStatus'), { type: 'doughnut', data: { labels: ['Aguardando', 'Em Andamento', 'Concluídos'], datasets: [{ data: [statusCount.aguardando, statusCount.andamento, statusCount.concluido], backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: '#e2e8f0' } } } } });
+            }
+        }
+        
+        function filtrarKanban(tipo) { atualizarUI(); }
+        
+        // Abrir Modais
+        function abrirModalProcesso() { document.getElementById('modalTitulo').innerText = 'Novo Processo'; document.getElementById('formProcesso').reset(); document.getElementById('processoId').value = ''; abrirModal('modalProcesso'); }
+        function abrirModalAudiencia() { if (processos.length === 0) { Swal.fire('Atenção', 'Cadastre um processo primeiro', 'warning'); return; } abrirModal('modalAudiencia'); }
+        function abrirModalPeticao() { abrirModal('modalPeticao'); }
+        function abrirModalTarefa() { abrirModal('modalTarefa'); }
+        function abrirModalHonorarios() { abrirModal('modalHonorarios'); }
+        function abrirModalRelatorios() { abrirModal('modalRelatorios'); }
+        function abrirModalDocumentos() { abrirModal('modalDocumentos'); }
+        function abrirConfiguracoes() { renderizarFeriados(); document.getElementById('metaFinanceira').value = metaFinanceira; abrirModal('modalConfig'); }
+        function abrirPainelBI() { abrirModal('modalBI'); }
+
+        // ==================== EVENT LISTENERS ====================
+        document.getElementById('formProcesso')?.addEventListener('submit', salvarProcesso);
+        document.getElementById('formAudiencia')?.addEventListener('submit', salvarAudiencia);
+        document.getElementById('formPeticao')?.addEventListener('submit', salvarPeticao);
+        document.getElementById('formTarefa')?.addEventListener('submit', salvarTarefa);
+        document.getElementById('buscaProcessos')?.addEventListener('input', () => atualizarUI());
+        document.getElementById('filtroStatus')?.addEventListener('change', () => atualizarUI());
+        
+        // Fechar modais clicando fora
+        window.onclick = function(event) { if (event.target.classList.contains('fixed') && event.target.classList.contains('bg-black/80')) { event.target.classList.add('hidden'); event.target.classList.remove('flex'); } };
+        
+        // Inicialização
+        setInterval(() => { document.getElementById('horaAtual').innerText = new Date().toLocaleTimeString('pt-BR'); }, 1000);
+        
+        // Carregar dados do localStorage (fallback)
+        const savedTarefas = localStorage.getItem('advflow_tarefas');
+        if (savedTarefas) tarefas = JSON.parse(savedTarefas);
+        const savedFinanceiro = localStorage.getItem('advflow_financeiro');
+        if (savedFinanceiro) financeiro = JSON.parse(savedFinanceiro);
+        const savedModelos = localStorage.getItem('advflow_modelos');
+        if (savedModelos) modelosUsuario = JSON.parse(savedModelos);
+        const savedFeriados = localStorage.getItem('feriados');
+        if (savedFeriados) feriados = JSON.parse(savedFeriados);
+        const savedMeta = localStorage.getItem('config_meta');
+        if (savedMeta) metaFinanceira = parseFloat(savedMeta);
+        
+        // Carregar dados principais
+        carregarProcessos();
+        carregarDashboard();
     </script>
 </body>
 </html>

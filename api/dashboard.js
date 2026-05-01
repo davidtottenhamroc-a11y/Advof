@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
 
-const uri = process.env.MONGODB_URI || 'mongodb+srv://lucasvianaabrantes23_db_user:proJectpsswd%21@cluster0.bq02dgw.mongodb.net/advflow_db?retryWrites=true&w=majority';
+const uri = process.env.MONGODB_URI || 'mongodb+srv://lucasvianaabrantes23_db_user:proJectpsswd!@cluster0.bq02dgw.mongodb.net/advflow_db?retryWrites=true&w=majority';
 
 let cachedClient = null;
 let cachedDb = null;
@@ -27,6 +27,10 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  if (req.method !== 'GET') {
+    return res.status(405).json({ success: false });
   }
 
   try {

@@ -1,5 +1,5 @@
 {
-  "name": "advflow-pro",
+  "name": "advof",
   "version": "1.0.0",
   "dependencies": {
     "mongodb": "^5.9.0"

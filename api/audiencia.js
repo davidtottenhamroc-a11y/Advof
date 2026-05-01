@@ -1,5 +1,25 @@
-import { connectToDatabase } from '../src/mongodb.js';
+import { MongoClient } from 'mongodb';
 import { ObjectId } from 'mongodb';
+
+const uri = process.env.MONGODB_URI || 'mongodb+srv://lucasvianaabrantes23_db_user:proJectpsswd!@cluster0.bq02dgw.mongodb.net/advflow_db?retryWrites=true&w=majority';
+
+let cachedClient = null;
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb };
+  }
+
+  const client = new MongoClient(uri);
+  await client.connect();
+  const db = client.db('advflow_db');
+
+  cachedClient = client;
+  cachedDb = db;
+
+  return { client, db };
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -30,7 +50,6 @@ export default async function handler(req, res) {
 
     if (req.method === 'DELETE') {
       const { id } = req.query;
-      if (!id) return res.status(400).json({ success: false, error: 'ID não informado' });
       await collection.deleteOne({ _id: new ObjectId(id) });
       return res.status(200).json({ success: true });
     }
