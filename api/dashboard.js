@@ -10,57 +10,44 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'GET') {
-    return res.status(405).json({ success: false, error: 'Método não permitido' });
+    return res.status(405).json({ success: false });
   }
 
   try {
     const { db } = await connectToDatabase();
     
-    // Métricas principais
     const totalProcessos = await db.collection('processos').countDocuments();
     const processosAtivos = await db.collection('processos').countDocuments({ status: { $ne: 'concluido' } });
     
     const hoje = new Date();
-    const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).toISOString();
-    const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 1).toISOString();
+    const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 1);
     
     const audienciasHoje = await db.collection('audiencias').countDocuments({
-      data: { $gte: inicioDia, $lt: fimDia }
+      data: { $gte: inicioDia.toISOString(), $lt: fimDia.toISOString() }
     });
     
-    const honorariosMes = await db.collection('processos').aggregate([
-      {
-        $match: {
-          dataDistribuicao: {
-            $regex: `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
-          }
-        }
-      },
+    const prazoFim = new Date();
+    prazoFim.setDate(prazoFim.getDate() + 2);
+    const prazosFatais = await db.collection('processos').countDocuments({
+      proximoPrazo: { $gte: new Date().toISOString(), $lte: prazoFim.toISOString() }
+    });
+    
+    const totalHonorariosAgg = await db.collection('processos').aggregate([
       { $group: { _id: null, total: { $sum: '$honorarios' } } }
     ]).toArray();
+    const totalHonorarios = totalHonorariosAgg[0]?.total || 0;
     
     const processosGanhos = await db.collection('processos').countDocuments({ resultado: 'ganho' });
     const totalConcluidos = await db.collection('processos').countDocuments({ status: 'concluido' });
     const taxaExito = totalConcluidos > 0 ? (processosGanhos / totalConcluidos * 100).toFixed(1) : 0;
     
-    const valorCausaTotal = await db.collection('processos').aggregate([
+    const valorCausaAgg = await db.collection('processos').aggregate([
       { $group: { _id: null, total: { $sum: '$valorCausa' } } }
     ]).toArray();
+    const valorCausaTotal = valorCausaAgg[0]?.total || 0;
     
     const tarefasPendentes = await db.collection('tarefas').countDocuments({ concluida: false });
-    
-    // Processos por status
-    const processosPorStatus = await db.collection('processos').aggregate([
-      { $group: { _id: '$status', count: { $sum: 1 } } }
-    ]).toArray();
-    
-    // Próximas audiências
-    const proximasAudiencias = await db.collection('audiencias').find({
-      data: { $gt: new Date().toISOString() }
-    }).sort({ data: 1 }).limit(5).toArray();
-    
-    // Tarefas pendentes
-    const tarefasList = await db.collection('tarefas').find({ concluida: false }).sort({ prazo: 1 }).limit(5).toArray();
     
     return res.status(200).json({
       success: true,
@@ -68,16 +55,14 @@ export default async function handler(req, res) {
         metricas: {
           totalProcessos,
           processosAtivos,
+          prazosFatais,
           audienciasHoje,
-          honorariosMes: honorariosMes[0]?.total || 0,
+          totalHonorarios,
           processosGanhos,
           taxaExito: parseFloat(taxaExito),
-          valorCausaTotal: valorCausaTotal[0]?.total || 0,
+          valorCausaTotal,
           tarefasPendentes
-        },
-        processosPorStatus,
-        proximasAudiencias,
-        tarefas: tarefasList
+        }
       }
     });
   } catch (error) {

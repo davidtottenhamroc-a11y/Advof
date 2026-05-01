@@ -3,7 +3,7 @@ import { MongoClient } from 'mongodb';
 const uri = process.env.MONGODB_URI;
 
 if (!uri) {
-  console.error('❌ MONGODB_URI não configurada nas variáveis de ambiente do Vercel');
+  console.error('❌ MONGODB_URI não configurada nas variáveis de ambiente');
 }
 
 let cachedClient = null;
@@ -17,8 +17,6 @@ export async function connectToDatabase() {
   const client = new MongoClient(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000,
   });
 
   await client.connect();

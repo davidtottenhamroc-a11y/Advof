@@ -2,7 +2,6 @@ import { connectToDatabase } from '../src/mongodb.js';
 import { ObjectId } from 'mongodb';
 
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -45,50 +44,33 @@ export default async function handler(req, res) {
       };
       
       const result = await collection.insertOne(processo);
-      return res.status(201).json({ 
-        success: true, 
-        data: { ...processo, _id: result.insertedId },
-        message: 'Processo criado com sucesso'
-      });
+      const novoProcesso = { ...processo, _id: result.insertedId };
+      return res.status(201).json({ success: true, data: novoProcesso });
     }
 
     // PUT - Atualizar processo
     if (req.method === 'PUT') {
       const { id } = req.query;
-      const updateData = {
-        ...req.body,
-        updatedAt: new Date().toISOString()
-      };
+      if (!id) return res.status(400).json({ success: false, error: 'ID não informado' });
+      
+      const updateData = { ...req.body, updatedAt: new Date().toISOString() };
       delete updateData._id;
       
-      const result = await collection.updateOne(
+      await collection.updateOne(
         { _id: new ObjectId(id) },
         { $set: updateData }
       );
       
-      if (result.matchedCount === 0) {
-        return res.status(404).json({ success: false, error: 'Processo não encontrado' });
-      }
-      
-      return res.status(200).json({ success: true, message: 'Processo atualizado' });
+      return res.status(200).json({ success: true });
     }
 
     // DELETE - Remover processo
     if (req.method === 'DELETE') {
       const { id } = req.query;
+      if (!id) return res.status(400).json({ success: false, error: 'ID não informado' });
       
-      // Remover dados relacionados
-      await db.collection('audiencias').deleteMany({ processoId: id });
-      await db.collection('tarefas').deleteMany({ processoId: id });
-      await db.collection('financeiro').deleteMany({ processoId: id });
-      
-      const result = await collection.deleteOne({ _id: new ObjectId(id) });
-      
-      if (result.deletedCount === 0) {
-        return res.status(404).json({ success: false, error: 'Processo não encontrado' });
-      }
-      
-      return res.status(200).json({ success: true, message: 'Processo removido' });
+      await collection.deleteOne({ _id: new ObjectId(id) });
+      return res.status(200).json({ success: true });
     }
 
     return res.status(405).json({ success: false, error: 'Método não permitido' });
