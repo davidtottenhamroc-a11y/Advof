@@ -1,4 +1,24 @@
-import { connectToDatabase } from '../src/mongodb.js';
+import { MongoClient } from 'mongodb';
+
+const uri = process.env.MONGODB_URI || 'mongodb+srv://lucasvianaabrantes23_db_user:proJectpsswd%21@cluster0.bq02dgw.mongodb.net/advflow_db?retryWrites=true&w=majority';
+
+let cachedClient = null;
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb };
+  }
+
+  const client = new MongoClient(uri);
+  await client.connect();
+  const db = client.db('advflow_db');
+
+  cachedClient = client;
+  cachedDb = db;
+
+  return { client, db };
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -9,29 +29,11 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  if (req.method !== 'GET') {
-    return res.status(405).json({ success: false });
-  }
-
   try {
     const { db } = await connectToDatabase();
     
     const totalProcessos = await db.collection('processos').countDocuments();
     const processosAtivos = await db.collection('processos').countDocuments({ status: { $ne: 'concluido' } });
-    
-    const hoje = new Date();
-    const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-    const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 1);
-    
-    const audienciasHoje = await db.collection('audiencias').countDocuments({
-      data: { $gte: inicioDia.toISOString(), $lt: fimDia.toISOString() }
-    });
-    
-    const prazoFim = new Date();
-    prazoFim.setDate(prazoFim.getDate() + 2);
-    const prazosFatais = await db.collection('processos').countDocuments({
-      proximoPrazo: { $gte: new Date().toISOString(), $lte: prazoFim.toISOString() }
-    });
     
     const totalHonorariosAgg = await db.collection('processos').aggregate([
       { $group: { _id: null, total: { $sum: '$honorarios' } } }
@@ -46,23 +48,15 @@ export default async function handler(req, res) {
       { $group: { _id: null, total: { $sum: '$valorCausa' } } }
     ]).toArray();
     const valorCausaTotal = valorCausaAgg[0]?.total || 0;
-    
-    const tarefasPendentes = await db.collection('tarefas').countDocuments({ concluida: false });
-    
+
     return res.status(200).json({
       success: true,
       data: {
-        metricas: {
-          totalProcessos,
-          processosAtivos,
-          prazosFatais,
-          audienciasHoje,
-          totalHonorarios,
-          processosGanhos,
-          taxaExito: parseFloat(taxaExito),
-          valorCausaTotal,
-          tarefasPendentes
-        }
+        totalProcessos,
+        processosAtivos,
+        totalHonorarios,
+        taxaExito: parseFloat(taxaExito),
+        valorCausaTotal
       }
     });
   } catch (error) {
