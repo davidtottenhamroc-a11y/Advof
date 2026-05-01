@@ -1,15 +1,75 @@
 {
   "version": 2,
   "name": "advflow-pro",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "description": "Sistema Jurídico Inteligente para Advogados",
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 10,
+      "memory": 1024
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
       ]
     }
   ],
-  "cleanUrls": true
+  "env": {
+    "MONGODB_URI": "mongodb+srv://lucasvianaabrantes23_db_user:proJectpwssd!@cluster0.bq02dgw.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+    "APP_NAME": "AdvFlow Pro",
+    "APP_VERSION": "2.0.0",
+    "APP_ENV": "production"
+  },
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "devCommand": null,
+  "installCommand": "npm install mongodb",
+  "framework": null,
+  "regions": ["gru1"],
+  "cleanUrls": true,
+  "trailingSlash": false
 }
