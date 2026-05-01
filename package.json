@@ -1,11 +1,9 @@
 {
-  "name": "advflow-pro-api",
+  "name": "advflow-pro",
   "version": "2.0.0",
-  "description": "API do sistema jurídico AdvFlow Pro",
-  "main": "index.js",
+  "description": "Sistema Jurídico para Advogados",
   "scripts": {
     "dev": "vercel dev",
-    "start": "vercel start",
     "deploy": "vercel --prod"
   },
   "dependencies": {
@@ -13,6 +11,5 @@
   },
   "devDependencies": {
     "vercel": "^33.5.0"
-  },
-  "keywords": ["juridico", "advocacia", "processos", "mongo"]
+  }
 }
