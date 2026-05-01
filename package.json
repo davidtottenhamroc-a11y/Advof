@@ -1,6 +1,7 @@
 {
   "name": "advof",
   "version": "1.0.0",
+  "type": "module",
   "dependencies": {
     "mongodb": "^5.9.0"
   }
