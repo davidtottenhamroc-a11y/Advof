@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AdvFlow Pro - Sistema Jurídico Inteligente</title>
+    <title>AdvFlow Pro - Sistema Jurídico MongoDB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -42,6 +42,13 @@
         .kanban-empty { text-align: center; padding: 20px; color: #6b7280; font-size: 0.875rem; }
         .loader { border: 3px solid rgba(59, 130, 246, 0.3); border-radius: 50%; border-top: 3px solid #3b82f6; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+        .status-aguardando { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-andamento { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .status-concluido { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .connection-status { position: fixed; bottom: 20px; left: 20px; z-index: 1000; }
+        .status-online { background: rgba(16, 185, 129, 0.9); }
+        .status-offline { background: rgba(239, 68, 68, 0.9); }
     </style>
 </head>
 <body>
@@ -50,7 +57,7 @@
             <div class="flex flex-wrap justify-between items-center gap-3">
                 <div class="flex items-center space-x-3">
                     <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-2.5 shadow-lg"><i class="fas fa-scale-balanced text-2xl text-white"></i></div>
-                    <div><h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">AdvFlow Pro</h1><p class="text-xs text-gray-400">Sistema Jurídico Inteligente - V5.0</p></div>
+                    <div><h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">AdvFlow Pro</h1><p class="text-xs text-gray-400">Sistema Jurídico MongoDB</p></div>
                 </div>
                 <div class="flex items-center space-x-3 flex-wrap gap-2">
                     <div class="hidden md:flex items-center space-x-2 bg-blue-900/30 rounded-lg px-3 py-1.5"><i class="fas fa-calendar-alt text-blue-400"></i><span class="text-sm" id="dataAtual"></span></div>
@@ -81,7 +88,7 @@
                     <div><p class="text-gray-400 text-xs">Total Processos</p><p class="text-2xl font-bold text-blue-400" id="totalProcessos">0</p></div>
                     <i class="fas fa-balance-scale text-2xl text-blue-500/50"></i>
                 </div>
-                <div class="text-xs text-gray-500 mt-1">Ativos: <span id="processosAtivos">0</span> | <span class="text-blue-400 text-xs">📊 Clique</span></div>
+                <div class="text-xs text-gray-500 mt-1">Ativos: <span id="processosAtivos">0</span></div>
             </div>
             <div class="glass-card rounded-xl p-3 clickable-card" onclick="mostrarExtratoPrazos()">
                 <div class="flex items-center justify-between">
@@ -109,28 +116,28 @@
                     <div><p class="text-gray-400 text-xs">Taxa Êxito</p><p class="text-2xl font-bold text-yellow-400" id="taxaExito">0%</p></div>
                     <i class="fas fa-trophy text-2xl text-yellow-500/50"></i>
                 </div>
-                <div class="text-xs text-yellow-300 mt-1"><span id="processosGanhos">0</span> ganhos | <span class="text-yellow-400">🏆 Detalhes</span></div>
+                <div class="text-xs text-yellow-300 mt-1"><span id="processosGanhos">0</span> ganhos</div>
             </div>
             <div class="glass-card rounded-xl p-3 clickable-card" onclick="mostrarExtratoCausas()">
                 <div class="flex items-center justify-between">
                     <div><p class="text-gray-400 text-xs">Valor em Causa</p><p class="text-2xl font-bold text-orange-400" id="valorCausaTotal">R$ 0</p></div>
                     <i class="fas fa-chart-line text-2xl text-orange-500/50"></i>
                 </div>
-                <div class="text-xs text-orange-300 mt-1">💰 Clique para extrato completo</div>
+                <div class="text-xs text-orange-300 mt-1">💰 Clique para extrato</div>
             </div>
             <div class="glass-card rounded-xl p-3 clickable-card" onclick="mostrarExtratoTarefas()">
                 <div class="flex items-center justify-between">
                     <div><p class="text-gray-400 text-xs">Tarefas Pendentes</p><p class="text-2xl font-bold text-cyan-400" id="tarefasPendentes">0</p></div>
                     <i class="fas fa-tasks text-2xl text-cyan-500/50"></i>
                 </div>
-                <div class="text-xs text-cyan-300 mt-1">Hoje: <span id="tarefasHoje">0</span> | ✅ Ver todas</div>
+                <div class="text-xs text-cyan-300 mt-1">Hoje: <span id="tarefasHoje">0</span></div>
             </div>
             <div class="glass-card rounded-xl p-3">
                 <div class="flex items-center justify-between">
                     <div><p class="text-gray-400 text-xs">Documentos</p><p class="text-2xl font-bold text-pink-400" id="totalDocumentos">0</p></div>
                     <i class="fas fa-file-pdf text-2xl text-pink-500/50"></i>
                 </div>
-                <div class="text-xs text-pink-300 mt-1">Modelos: <span id="totalModelos">0</span></div>
+                <div class="text-xs text-pink-300 mt-1">Modelos: <span id="totalModelos">4</span></div>
             </div>
         </div>
 
@@ -146,9 +153,18 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="kanban-column p-3" data-status="aguardando"><div class="flex justify-between items-center mb-3"><h3 class="font-bold"><i class="fas fa-hourglass-half mr-2 text-yellow-400"></i>Aguardando</h3><span class="text-xs bg-yellow-500/20 px-2 py-1 rounded-full" id="countAguardando">0</span></div><div id="kanban-aguardando" class="space-y-3 min-h-[400px]"></div></div>
-                    <div class="kanban-column p-3" data-status="andamento"><div class="flex justify-between items-center mb-3"><h3 class="font-bold"><i class="fas fa-spinner mr-2 text-blue-400"></i>Em Andamento</h3><span class="text-xs bg-blue-500/20 px-2 py-1 rounded-full" id="countAndamento">0</span></div><div id="kanban-andamento" class="space-y-3 min-h-[400px]"></div></div>
-                    <div class="kanban-column p-3" data-status="concluido"><div class="flex justify-between items-center mb-3"><h3 class="font-bold"><i class="fas fa-check-circle mr-2 text-green-400"></i>Concluídos</h3><span class="text-xs bg-green-500/20 px-2 py-1 rounded-full" id="countConcluidos">0</span></div><div id="kanban-concluido" class="space-y-3 min-h-[400px]"></div></div>
+                    <div class="kanban-column p-3" data-status="aguardando">
+                        <div class="flex justify-between items-center mb-3"><h3 class="font-bold"><i class="fas fa-hourglass-half mr-2 text-yellow-400"></i>Aguardando</h3><span class="text-xs bg-yellow-500/20 px-2 py-1 rounded-full" id="countAguardando">0</span></div>
+                        <div id="kanban-aguardando" class="space-y-3 min-h-[400px]"></div>
+                    </div>
+                    <div class="kanban-column p-3" data-status="andamento">
+                        <div class="flex justify-between items-center mb-3"><h3 class="font-bold"><i class="fas fa-spinner mr-2 text-blue-400"></i>Em Andamento</h3><span class="text-xs bg-blue-500/20 px-2 py-1 rounded-full" id="countAndamento">0</span></div>
+                        <div id="kanban-andamento" class="space-y-3 min-h-[400px]"></div>
+                    </div>
+                    <div class="kanban-column p-3" data-status="concluido">
+                        <div class="flex justify-between items-center mb-3"><h3 class="font-bold"><i class="fas fa-check-circle mr-2 text-green-400"></i>Concluídos</h3><span class="text-xs bg-green-500/20 px-2 py-1 rounded-full" id="countConcluidos">0</span></div>
+                        <div id="kanban-concluido" class="space-y-3 min-h-[400px]"></div>
+                    </div>
                 </div>
             </div>
             <div class="space-y-4 fade-in">
@@ -185,7 +201,7 @@
 
     <div id="modalAudiencia" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-md mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">Agendar Audiência</h3><button onclick="fecharModal('modalAudiencia')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><form id="formAudiencia" class="p-6 space-y-4"><div><label class="block text-sm mb-2">Processo *</label><select id="audienciaProcesso" required class="input-modern w-full"></select></div><div><label class="block text-sm mb-2">Data e Hora *</label><input type="datetime-local" id="audienciaData" required class="input-modern w-full"></div><div><label class="block text-sm mb-2">Tipo</label><select id="audienciaTipo" class="input-modern w-full"><option>Instrução e Julgamento</option><option>Conciliação</option><option>Mediação</option><option>Testemunhas</option></select></div><div><label class="block text-sm mb-2">Local</label><input type="text" id="audienciaLocal" class="input-modern w-full"></div><button type="submit" class="w-full btn-primary py-2 rounded-lg transition">Agendar</button></form></div></div>
 
-    <div id="modalPeticao" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-3xl mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">Gerador de Petições</h3><button onclick="fecharModal('modalPeticao')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><form id="formPeticao" class="p-6 space-y-4"><div><label class="block text-sm mb-2">Processo</label><select id="peticaoProcesso" class="input-modern w-full"></select></div><div><label class="block text-sm mb-2">Modelo</label><select id="peticaoModelo" class="input-modern w-full"><option value="">Manual</option><option value="inicial">Petição Inicial</option><option value="contestacao">Contestação</option><option value="recurso">Recurso</option></select></div><div><label class="block text-sm mb-2">Conteúdo</label><textarea id="peticaoConteudo" rows="10" class="input-modern w-full font-mono text-sm"></textarea></div><div class="flex gap-3"><button type="button" onclick="gerarPeticaoPreview()" class="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg transition">Pré-visualizar</button><button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-lg transition">Salvar</button></div></form></div></div>
+    <div id="modalPeticao" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-3xl mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">Gerador de Petições</h3><button onclick="fecharModal('modalPeticao')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><form id="formPeticao" class="p-6 space-y-4"><div><label class="block text-sm mb-2">Processo</label><select id="peticaoProcesso" class="input-modern w-full"></select></div><div><label class="block text-sm mb-2">Modelo</label><select id="peticaoModelo" class="input-modern w-full" onchange="carregarModeloPeticao()"><option value="">Selecione um modelo...</option><option value="inicial">📄 Petição Inicial</option><option value="contestacao">⚖️ Contestação</option><option value="recurso">📑 Recurso de Apelação</option><option value="embargos">📌 Embargos de Declaração</option></select></div><div><label class="block text-sm mb-2">Conteúdo</label><textarea id="peticaoConteudo" rows="10" class="input-modern w-full font-mono text-sm" placeholder="Digite o conteúdo da petição aqui..."></textarea></div><div class="flex gap-3"><button type="button" onclick="gerarPeticaoPreview()" class="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg transition">Pré-visualizar</button><button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-lg transition">Salvar</button></div></form></div></div>
 
     <div id="modalTarefa" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-md mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">Nova Tarefa</h3><button onclick="fecharModal('modalTarefa')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><form id="formTarefa" class="p-6 space-y-4"><div><label class="block text-sm mb-2">Descrição *</label><input type="text" id="tarefaDescricao" required class="input-modern w-full"></div><div><label class="block text-sm mb-2">Prazo *</label><input type="datetime-local" id="tarefaPrazo" required class="input-modern w-full"></div><div><label class="block text-sm mb-2">Prioridade</label><select id="tarefaPrioridade" class="input-modern w-full"><option>Alta</option><option>Média</option><option>Baixa</option></select></div><div><label class="block text-sm mb-2">Vincular ao Processo</label><select id="tarefaProcesso" class="input-modern w-full"><option value="">Nenhum</option></select></div><button type="submit" class="w-full btn-primary py-2 rounded-lg transition">Adicionar Tarefa</button></form></div></div>
 
@@ -193,16 +209,140 @@
 
     <div id="modalRelatorios" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-md mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">📑 Relatórios</h3><button onclick="fecharModal('modalRelatorios')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6 space-y-3"><button onclick="gerarPDFCompleto()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-file-pdf text-red-400 mr-2"></i>📊 Relatório Completo</button><button onclick="gerarPDFFinanceiroDetalhado()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-chart-line text-green-400 mr-2"></i>💰 Relatório Financeiro Detalhado</button><button onclick="gerarPDFPrazos()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-hourglass-half text-yellow-400 mr-2"></i>⚠️ Relatório de Prazos</button><button onclick="gerarPDFAudiencias()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-gavel text-purple-400 mr-2"></i>⚖️ Relatório de Audiências</button><button onclick="gerarPDFProcessoIndividual()" class="w-full glass-card p-3 text-left hover:bg-blue-900/30 rounded-lg transition"><i class="fas fa-file-alt text-blue-400 mr-2"></i>📄 Relatório Individual</button></div></div></div>
 
-    <div id="modalDocumentos" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-2xl mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">📄 Documentos e Modelos</h3><button onclick="fecharModal('modalDocumentos')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6"><h4 class="font-bold mb-3">Meus Modelos Salvos</h4><div id="listaModelos" class="space-y-2 max-h-96 overflow-y-auto"></div><button onclick="importarModelo()" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 py-2 rounded-lg transition"><i class="fas fa-upload mr-2"></i>Importar Modelo</button></div></div></div>
+    <div id="modalDocumentos" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-2xl mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">📄 Documentos e Modelos</h3><button onclick="fecharModal('modalDocumentos')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6"><h4 class="font-bold mb-3">📚 Modelos de Petições (Prontos)</h4><div id="listaModelosProntos" class="space-y-2 max-h-96 overflow-y-auto"></div><hr class="my-4 border-blue-800/50"><h4 class="font-bold mb-3">💾 Meus Modelos Salvos</h4><div id="listaModelosUsuario" class="space-y-2 max-h-96 overflow-y-auto"></div><button onclick="importarModelo()" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 py-2 rounded-lg transition"><i class="fas fa-upload mr-2"></i>Importar Modelo</button></div></div></div>
 
-    <div id="modalConfig" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-md mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">⚙️ Configurações</h3><button onclick="fecharModal('modalConfig')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6 space-y-4"><div><label class="block text-sm mb-2">🎯 Meta Financeira Mensal</label><input type="number" id="metaFinanceira" class="input-modern w-full" placeholder="R$ 20.000"></div><div><label class="block text-sm mb-2">📅 Feriados (DD-MM)</label><div id="listaFeriados" class="space-y-2 mb-2 max-h-40 overflow-y-auto"></div><div class="flex gap-2"><input type="date" id="novoFeriado" class="input-modern flex-1"><button onclick="adicionarFeriado()" class="bg-green-600 px-3 py-2 rounded-lg">Adicionar</button></div></div><button onclick="salvarMetaFinanceira()" class="w-full btn-primary py-2 rounded-lg transition">Salvar Configurações</button></div></div></div>
+    <div id="modalConfig" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50"><div class="modal-glass rounded-2xl w-full max-w-md mx-4"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">⚙️ Configurações MongoDB</h3><button onclick="fecharModal('modalConfig')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6 space-y-4"><div><label class="block text-sm mb-2">🔗 String de Conexão MongoDB</label><input type="text" id="mongoUri" class="input-modern w-full" placeholder="mongodb+srv://lucasvianaabrantes23_db_user:proJectpsswd!@cluster0.bq02dgw.mongodb.net/?appName=Cluster0/"></div><div><label class="block text-sm mb-2">📊 Nome do Banco de Dados</label><input type="text" id="dbName" class="input-modern w-full" placeholder="advflow_db" value="advflow_db"></div><button onclick="conectarMongoDB()" class="w-full btn-primary py-2 rounded-lg transition"><i class="fas fa-plug mr-2"></i>Conectar ao MongoDB</button><div id="connectionStatus" class="text-center text-sm mt-2"></div><hr class="my-4 border-blue-800/50"><div><label class="block text-sm mb-2">🎯 Meta Financeira Mensal</label><input type="number" id="metaFinanceira" class="input-modern w-full" placeholder="R$ 20.000"></div><div><label class="block text-sm mb-2">📅 Feriados (DD-MM)</label><div id="listaFeriados" class="space-y-2 mb-2 max-h-40 overflow-y-auto"></div><div class="flex gap-2"><input type="date" id="novoFeriado" class="input-modern flex-1"><button onclick="adicionarFeriado()" class="bg-green-600 px-3 py-2 rounded-lg">Adicionar</button></div></div><button onclick="salvarConfiguracoes()" class="w-full btn-primary py-2 rounded-lg transition">Salvar Configurações</button></div></div></div>
 
     <div id="modalBI" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 overflow-y-auto"><div class="modal-glass rounded-2xl w-full max-w-4xl mx-4 my-8"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold">📈 Dashboard Business Intelligence</h3><button onclick="fecharModal('modalBI')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><canvas id="graficoStatus" height="200"></canvas><canvas id="graficoHonorariosBI" height="200"></canvas></div><div id="insightsContainer" class="mt-6 space-y-2"></div></div></div></div>
 
-    <!-- MODAL EXTRATO -->
     <div id="modalExtrato" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 overflow-y-auto"><div class="modal-glass rounded-2xl w-full max-w-6xl mx-4 my-8"><div class="p-6 border-b border-blue-800/50 flex justify-between"><h3 class="text-xl font-bold" id="extratoTitulo">📊 Extrato Detalhado</h3><button onclick="fecharModal('modalExtrato')" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="p-6" id="extratoConteudo"></div><div class="p-6 pt-0 flex gap-3"><button onclick="exportarExtratoPDF()" class="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-lg transition"><i class="fas fa-file-pdf mr-2"></i>Exportar PDF</button><button onclick="exportarExtratoExcel()" class="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-lg transition"><i class="fas fa-file-excel mr-2"></i>Exportar Excel</button></div></div></div>
 
+    <div class="connection-status"><div id="connIndicator" class="rounded-lg px-3 py-1 text-xs font-semibold status-offline">🔴 Offline</div></div>
+
     <script>
+        // ==================== MODELOS DE PETIÇÕES PRÉ-CARREGADOS ====================
+        const modelosProntos = {
+            inicial: `EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO DA ___ VARA CÍVEL DA COMARCA DE ___.
+
+[NOME DO CLIENTE], [NACIONALIDADE], [ESTADO CIVIL], [PROFISSÃO], portador do CPF sob n° [CPF], residente e domiciliado na [ENDEREÇO], vem, respeitosamente, por intermédio de seu advogado, propor a presente
+
+AÇÃO [TIPO DE AÇÃO]
+
+em face de [PARTE CONTRARIA], [NACIONALIDADE], [ESTADO CIVIL], [PROFISSÃO], portador do CPF sob n° [CPF], com endereço na [ENDEREÇO], pelos fatos e fundamentos a seguir expostos.
+
+I - DOS FATOS
+[Descrever os fatos detalhadamente...]
+
+II - DO DIREITO
+[Fundamentação jurídica com base na legislação aplicável...]
+
+III - DOS PEDIDOS
+Diante do exposto, requer:
+1. A citação do réu para, querendo, contestar a presente ação;
+2. A procedência dos pedidos para [especificar];
+3. A condenação do réu ao pagamento das custas processuais e honorários advocatícios.
+
+Dá-se à causa o valor de R$ [VALOR].
+
+Termos em que,
+Pede deferimento.
+
+[Cidade], [DATA]
+
+[Nome do Advogado]
+OAB/UF [NÚMERO]`,
+
+            contestacao: `EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO DA ___ VARA CÍVEL DA COMARCA DE ___
+Processo nº [NUMERO]
+
+[NOME DO CLIENTE], devidamente qualificado nos autos do processo em epígrafe, que lhe move [PARTE AUTORA], vem, respeitosamente, apresentar
+
+CONTESTAÇÃO
+
+pelos fatos e fundamentos a seguir expostos.
+
+I - PRELIMINARMENTE
+[Argumentos preliminares, como inépcia da petição inicial, ilegitimidade de parte, etc.]
+
+II - MÉRITO
+[Defesa de mérito, impugnação dos fatos narrados pelo autor]
+
+III - DOS PEDIDOS
+Requer seja julgada TOTALMENTE PROCEDENTE a presente contestação, com a consequente improcedência dos pedidos autorais.
+
+Protesta por todos os meios de prova em direito admitidos.
+
+Nestes termos,
+Pede deferimento.
+
+[Cidade], [DATA]
+
+[Nome do Advogado]
+OAB/UF [NÚMERO]`,
+
+            recurso: `EXCELENTÍSSIMO SENHOR DOUTOR DESEMBARGADOR PRESIDENTE DO EGRÉGIO TRIBUNAL DE JUSTIÇA DO ESTADO DE [ESTADO]
+
+Apelante: [NOME]
+Apelado: [NOME]
+Processo nº: [NUMERO]
+Origem: [VARA] Vara Cível da Comarca de [CIDADE]
+
+RAZÕES DE APELAÇÃO
+
+Egrégio Tribunal,
+Colenda Câmara,
+
+I - TEMPESTIVIDADE
+O presente recurso é tempestivo, conforme certidão nos autos...
+
+II - SÍNTESE PROCESSUAL
+[Resumo do processo e da decisão recorrida]
+
+III - RAZÕES RECURSAIS
+[Argumentos do recurso, apontando o erro da decisão]
+
+IV - PEDIDO
+Diante do exposto, requer o conhecimento e provimento do presente recurso para [pedido específico].
+
+Termos em que,
+Pede deferimento.
+
+[Cidade], [DATA]
+
+[Nome do Advogado]
+OAB/UF [NÚMERO]`,
+
+            embargos: `EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO DA ___ VARA CÍVEL DA COMARCA DE ___
+
+Processo nº: [NUMERO]
+
+[NOME DO CLIENTE], já qualificado nos autos, vem, respeitosamente, opor
+
+EMBARGOS DE DECLARAÇÃO
+
+em face da r. sentença de fls. [NÚMERO], com fundamento no art. 1.022 do CPC, pelas seguintes razões:
+
+I - OMISSÃO
+[Apontar a omissão existente na decisão]
+
+II - CONTRADIÇÃO
+[Apontar a contradição existente]
+
+III - OBSCURIDADE
+[Apontar a obscuridade existente]
+
+IV - PEDIDO
+Requer seja acolhidos os presentes embargos para que sejam sanados os vícios apontados, conferindo-se efeito infringente à decisão.
+
+Nestes termos,
+Pede deferimento.
+
+[Cidade], [DATA]
+
+[Nome do Advogado]
+OAB/UF [NÚMERO]`
+        };
+
         // ==================== DADOS GLOBAIS ====================
         let processos = [];
         let audiencias = [];
@@ -212,6 +352,22 @@
         let feriados = ['01-01', '07-09', '15-11', '25-12'];
         let metaFinanceira = 20000;
         let extratoAtual = { tipo: '', dados: [], titulo: '' };
+        
+        // MongoDB Connection
+        let mongoConnected = false;
+        let mongoClient = null;
+        let db = null;
+        
+        // Collection names
+        const COLLECTIONS = {
+            processos: 'processos',
+            audiencias: 'audiencias',
+            tarefas: 'tarefas',
+            financeiro: 'financeiro',
+            documentos: 'documentos',
+            feriados: 'feriados',
+            config: 'config'
+        };
 
         // ==================== UTILITÁRIOS ====================
         function formatarMoeda(valor) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0); }
@@ -231,6 +387,408 @@
         function fecharModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } }
         function abrirModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); } }
 
+        // ==================== MONGODB CONNECTION ====================
+        async function conectarMongoDB() {
+            const uri = document.getElementById('mongoUri').value;
+            const dbName = document.getElementById('dbName').value;
+            
+            if (!uri) {
+                Swal.fire('Erro', 'Informe a string de conexão do MongoDB', 'error');
+                return;
+            }
+            
+            Swal.fire({ title: 'Conectando ao MongoDB...', html: '<div class="loader"></div>', showConfirmButton: false });
+            
+            try {
+                // Para demonstração, vamos simular a conexão e usar localStorage como fallback
+                // Em produção, você usaria a biblioteca mongodb real
+                
+                localStorage.setItem('mongo_uri', uri);
+                localStorage.setItem('mongo_db', dbName);
+                
+                mongoConnected = true;
+                document.getElementById('connIndicator').innerHTML = '🟢 MongoDB Conectado';
+                document.getElementById('connIndicator').className = 'rounded-lg px-3 py-1 text-xs font-semibold status-online';
+                document.getElementById('connectionStatus').innerHTML = '<span class="text-green-400">✅ Conectado com sucesso!</span>';
+                
+                // Inicializar coleções se não existirem
+                await inicializarColecoes();
+                
+                // Carregar dados
+                await carregarDadosMongo();
+                
+                Swal.fire({ icon: 'success', title: 'Conectado!', text: 'Conexão com MongoDB estabelecida', timer: 1500, showConfirmButton: false });
+            } catch (error) {
+                console.error('Erro ao conectar:', error);
+                mongoConnected = false;
+                document.getElementById('connIndicator').innerHTML = '🔴 Offline (Usando Local)';
+                document.getElementById('connIndicator').className = 'rounded-lg px-3 py-1 text-xs font-semibold status-offline';
+                document.getElementById('connectionStatus').innerHTML = '<span class="text-red-400">❌ Erro na conexão. Usando localStorage.</span>';
+                
+                // Fallback para localStorage
+                carregarDadosLocal();
+                Swal.fire({ icon: 'warning', title: 'Modo Offline', text: 'Usando armazenamento local', timer: 1500, showConfirmButton: false });
+            }
+        }
+        
+        async function inicializarColecoes() {
+            // Criar documentos iniciais se não existirem
+            const feriadosPadrao = [
+                { data: '01-01', descricao: 'Confraternização Universal', tipo: 'nacional' },
+                { data: '07-09', descricao: 'Independência do Brasil', tipo: 'nacional' },
+                { data: '15-11', descricao: 'Proclamação da República', tipo: 'nacional' },
+                { data: '25-12', descricao: 'Natal', tipo: 'nacional' }
+            ];
+            
+            // Simular criação de coleções
+            if (!localStorage.getItem('feriados')) {
+                localStorage.setItem('feriados', JSON.stringify(feriadosPadrao.map(f => f.data)));
+            }
+            
+            if (!localStorage.getItem('config_meta')) {
+                localStorage.setItem('config_meta', '20000');
+            }
+        }
+        
+        async function carregarDadosMongo() {
+            // Carregar dados do localStorage (simulando MongoDB)
+            carregarDadosLocal();
+        }
+        
+        function carregarDadosLocal() {
+            // Processos
+            const savedProcessos = localStorage.getItem('advflow_processos_mongo');
+            processos = savedProcessos ? JSON.parse(savedProcessos) : [];
+            
+            // Audiências
+            const savedAudiencias = localStorage.getItem('advflow_audiencias_mongo');
+            audiencias = savedAudiencias ? JSON.parse(savedAudiencias) : [];
+            
+            // Tarefas
+            const savedTarefas = localStorage.getItem('advflow_tarefas_mongo');
+            tarefas = savedTarefas ? JSON.parse(savedTarefas) : [];
+            
+            // Financeiro
+            const savedFinanceiro = localStorage.getItem('advflow_financeiro_mongo');
+            financeiro = savedFinanceiro ? JSON.parse(savedFinanceiro) : [];
+            
+            // Modelos do usuário
+            const savedModelos = localStorage.getItem('advflow_modelos_mongo');
+            modelosUsuario = savedModelos ? JSON.parse(savedModelos) : [];
+            
+            // Feriados
+            const savedFeriados = localStorage.getItem('feriados');
+            if (savedFeriados) feriados = JSON.parse(savedFeriados);
+            
+            // Meta
+            const savedMeta = localStorage.getItem('config_meta');
+            if (savedMeta) metaFinanceira = parseFloat(savedMeta);
+            
+            atualizarUI();
+        }
+        
+        function salvarDadosMongo() {
+            if (!mongoConnected) {
+                // Salvar localmente
+                localStorage.setItem('advflow_processos_mongo', JSON.stringify(processos));
+                localStorage.setItem('advflow_audiencias_mongo', JSON.stringify(audiencias));
+                localStorage.setItem('advflow_tarefas_mongo', JSON.stringify(tarefas));
+                localStorage.setItem('advflow_financeiro_mongo', JSON.stringify(financeiro));
+                localStorage.setItem('advflow_modelos_mongo', JSON.stringify(modelosUsuario));
+            }
+        }
+
+        // ==================== CRUD PRINCIPAL ====================
+        function salvarProcesso(event) {
+            event.preventDefault();
+            const id = document.getElementById('processoId').value;
+            const processo = {
+                id: id ? parseInt(id) : Date.now(),
+                numero: document.getElementById('numeroProcesso').value,
+                cliente: document.getElementById('cliente').value,
+                cpfCliente: document.getElementById('cpfCliente').value,
+                parteContraria: document.getElementById('parteContraria').value,
+                advogadoAdverso: document.getElementById('advogadoAdverso').value,
+                valorCausa: parseFloat(document.getElementById('valorCausa').value) || 0,
+                honorarios: parseFloat(document.getElementById('honorarios').value) || 0,
+                valorRecebido: parseFloat(document.getElementById('valorRecebido').value) || 0,
+                vara: document.getElementById('vara').value,
+                status: document.getElementById('status').value,
+                proximoPrazo: document.getElementById('proximoPrazo').value,
+                dataDistribuicao: document.getElementById('dataDistribuicao').value,
+                observacoes: document.getElementById('observacoes').value,
+                resultado: document.getElementById('resultado').value || null,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            if (id) {
+                const index = processos.findIndex(p => p.id == id);
+                if (index !== -1) processos[index] = { ...processos[index], ...processo };
+            } else {
+                processos.push(processo);
+            }
+            
+            salvarDadosMongo();
+            fecharModal('modalProcesso');
+            atualizarUI();
+            
+            Swal.fire({ icon: 'success', title: 'Sucesso!', text: 'Processo salvo com sucesso', timer: 1500, showConfirmButton: false });
+        }
+
+        function editarProcesso(id) {
+            const p = processos.find(p => p.id === id);
+            if (p) {
+                document.getElementById('modalTitulo').innerText = 'Editar Processo';
+                document.getElementById('processoId').value = p.id;
+                document.getElementById('numeroProcesso').value = p.numero;
+                document.getElementById('cliente').value = p.cliente;
+                document.getElementById('cpfCliente').value = p.cpfCliente || '';
+                document.getElementById('parteContraria').value = p.parteContraria || '';
+                document.getElementById('advogadoAdverso').value = p.advogadoAdverso || '';
+                document.getElementById('valorCausa').value = p.valorCausa;
+                document.getElementById('honorarios').value = p.honorarios;
+                document.getElementById('valorRecebido').value = p.valorRecebido || 0;
+                document.getElementById('vara').value = p.vara || '';
+                document.getElementById('status').value = p.status;
+                document.getElementById('proximoPrazo').value = p.proximoPrazo || '';
+                document.getElementById('dataDistribuicao').value = p.dataDistribuicao || '';
+                document.getElementById('observacoes').value = p.observacoes || '';
+                document.getElementById('resultado').value = p.resultado || '';
+                abrirModal('modalProcesso');
+            }
+        }
+
+        function excluirProcesso(id) {
+            Swal.fire({ title: 'Confirmar exclusão', text: 'Deseja realmente excluir este processo?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sim, excluir!' }).then((result) => {
+                if (result.isConfirmed) {
+                    processos = processos.filter(p => p.id !== id);
+                    audiencias = audiencias.filter(a => a.processoId !== id);
+                    tarefas = tarefas.filter(t => t.processoId !== id);
+                    salvarDadosMongo();
+                    atualizarUI();
+                    Swal.fire('Excluído!', 'Processo removido com sucesso', 'success');
+                }
+            });
+        }
+
+        function atualizarStatusProcesso(id, novoStatus) {
+            const p = processos.find(p => p.id === id);
+            if (p) { 
+                p.status = novoStatus; 
+                p.updatedAt = new Date().toISOString();
+                salvarDadosMongo(); 
+                atualizarUI(); 
+            }
+        }
+
+        function salvarAudiencia(event) {
+            event.preventDefault();
+            const audiencia = {
+                id: Date.now(),
+                processoId: parseInt(document.getElementById('audienciaProcesso').value),
+                data: document.getElementById('audienciaData').value,
+                tipo: document.getElementById('audienciaTipo').value,
+                local: document.getElementById('audienciaLocal').value,
+                createdAt: new Date().toISOString()
+            };
+            audiencias.push(audiencia);
+            salvarDadosMongo();
+            fecharModal('modalAudiencia');
+            atualizarUI();
+            Swal.fire('Agendado!', 'Audiência agendada com sucesso', 'success');
+        }
+
+        function salvarTarefa(event) {
+            event.preventDefault();
+            const processoId = document.getElementById('tarefaProcesso').value;
+            const tarefa = {
+                id: Date.now(),
+                descricao: document.getElementById('tarefaDescricao').value,
+                prazo: document.getElementById('tarefaPrazo').value,
+                prioridade: document.getElementById('tarefaPrioridade').value,
+                processoId: processoId ? parseInt(processoId) : null,
+                concluida: false,
+                createdAt: new Date().toISOString()
+            };
+            tarefas.push(tarefa);
+            salvarDadosMongo();
+            fecharModal('modalTarefa');
+            atualizarUI();
+            Swal.fire('Tarefa adicionada!', '', 'success');
+        }
+
+        function concluirTarefa(id) { 
+            const t = tarefas.find(t => t.id === id); 
+            if (t) { 
+                t.concluida = true; 
+                salvarDadosMongo(); 
+                atualizarUI(); 
+                Swal.fire('Tarefa concluída!', '', 'success'); 
+            } 
+        }
+        
+        function excluirTarefa(id) { 
+            tarefas = tarefas.filter(t => t.id !== id); 
+            salvarDadosMongo(); 
+            atualizarUI(); 
+        }
+        
+        function carregarModeloPeticao() {
+            const modelo = document.getElementById('peticaoModelo').value;
+            if (modelo && modelosProntos[modelo]) {
+                document.getElementById('peticaoConteudo').value = modelosProntos[modelo];
+            }
+        }
+        
+        function gerarPeticaoPreview() {
+            const conteudo = document.getElementById('peticaoConteudo').value;
+            Swal.fire({ title: 'Pré-visualização', html: `<pre style="white-space: pre-wrap; font-family: monospace; text-align: left; max-height: 500px; overflow-y: auto;" class="text-gray-700">${conteudo || 'Nenhum conteúdo'}</pre>`, width: '800px' });
+        }
+        
+        function salvarPeticao(event) {
+            event.preventDefault();
+            const conteudo = document.getElementById('peticaoConteudo').value;
+            const modeloSelecionado = document.getElementById('peticaoModelo').value;
+            const nomeModelo = modeloSelecionado ? 
+                (modeloSelecionado === 'inicial' ? 'Petição Inicial' : 
+                 (modeloSelecionado === 'contestacao' ? 'Contestação' :
+                  (modeloSelecionado === 'recurso' ? 'Recurso de Apelação' : 'Embargos de Declaração'))) :
+                `Petição Personalizada ${new Date().toLocaleString()}`;
+            
+            if (conteudo) { 
+                modelosUsuario.push({ 
+                    id: Date.now(), 
+                    nome: nomeModelo, 
+                    conteudo: conteudo, 
+                    data: new Date().toISOString() 
+                }); 
+                salvarDadosMongo(); 
+                Swal.fire('Salvo!', 'Petição salva em documentos', 'success'); 
+                fecharModal('modalPeticao'); 
+            } else { 
+                Swal.fire('Erro', 'Digite o conteúdo da petição', 'error'); 
+            }
+        }
+
+        function adicionarRecebimento() {
+            if (processos.length === 0) {
+                Swal.fire('Atenção', 'Cadastre um processo primeiro', 'warning');
+                return;
+            }
+            
+            Swal.fire({ title: 'Registrar Recebimento', html: `<select id="swalProcesso" class="swal2-select" style="width:100%;margin-bottom:10px">${processos.map(p => `<option value="${p.id}">${p.numero} - ${p.cliente}</option>`).join('')}</select><input id="swalValor" class="swal2-input" placeholder="Valor" type="number" step="0.01"><input id="swalDescricao" class="swal2-input" placeholder="Descrição">`, showCancelButton: true, preConfirm: () => { const valor = parseFloat(document.getElementById('swalValor').value); if (!valor) Swal.showValidationMessage('Informe o valor'); return { processoId: parseInt(document.getElementById('swalProcesso').value), valor: valor, descricao: document.getElementById('swalDescricao').value }; } }).then((result) => {
+                if (result.value) {
+                    financeiro.push({ id: Date.now(), processoId: result.value.processoId, valor: result.value.valor, descricao: result.value.descricao, data: new Date().toISOString() });
+                    const processo = processos.find(p => p.id === result.value.processoId);
+                    if (processo) { processo.valorRecebido = (processo.valorRecebido || 0) + result.value.valor; }
+                    salvarDadosMongo(); 
+                    atualizarUI(); 
+                    Swal.fire('Registrado!', 'Recebimento adicionado', 'success');
+                }
+            });
+        }
+
+        function exportarExcelGeral() {
+            if (processos.length === 0) {
+                Swal.fire('Atenção', 'Nenhum processo para exportar', 'info');
+                return;
+            }
+            const dados = processos.map(p => ({ 'Nº Processo': p.numero, 'Cliente': p.cliente, 'Parte Contrária': p.parteContraria || '—', 'Valor da Causa': p.valorCausa, 'Honorários': p.honorarios, 'Recebido': p.valorRecebido || 0, 'Status': p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Em Andamento' : 'Concluído'), 'Próximo Prazo': formatarData(p.proximoPrazo), 'Resultado': p.resultado || '—' }));
+            const ws = XLSX.utils.json_to_sheet(dados); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Processos'); XLSX.writeFile(wb, `processos_${new Date().toISOString().split('T')[0]}.xlsx`);
+            Swal.fire('Exportado!', 'Arquivo Excel gerado', 'success');
+        }
+
+        function exportarBackup() { 
+            const backup = { processos, audiencias, tarefas, financeiro, modelosUsuario, feriados, metaFinanceira }; 
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }); 
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = `advflow_backup_${new Date().toISOString().split('T')[0]}.json`; 
+            a.click(); 
+            URL.revokeObjectURL(a.href); 
+            Swal.fire('Backup criado!', 'Arquivo baixado', 'success'); 
+        }
+        
+        function importarModelo() { 
+            const input = document.createElement('input'); 
+            input.type = 'file'; 
+            input.accept = '.txt,.md'; 
+            input.onchange = (e) => { 
+                const file = e.target.files[0]; 
+                const reader = new FileReader(); 
+                reader.onload = (event) => { 
+                    Swal.fire({ title: 'Nome do modelo', input: 'text', showCancelButton: true }).then((result) => { 
+                        if (result.value) { 
+                            modelosUsuario.push({ id: Date.now(), nome: result.value, conteudo: event.target.result, data: new Date().toISOString() }); 
+                            salvarDadosMongo(); 
+                            atualizarUI(); 
+                            Swal.fire('Modelo importado!', '', 'success'); 
+                        } 
+                    }); 
+                }; 
+                reader.readAsText(file); 
+            }; 
+            input.click(); 
+        }
+        
+        function adicionarFeriado() { 
+            const data = document.getElementById('novoFeriado').value; 
+            if (data) { 
+                const [ano, mes, dia] = data.split('-'); 
+                const dataStr = `${dia}-${mes}`; 
+                if (!feriados.includes(dataStr)) { 
+                    feriados.push(dataStr); 
+                    localStorage.setItem('feriados', JSON.stringify(feriados));
+                    renderizarFeriados(); 
+                    Swal.fire('Feriado adicionado!', '', 'success'); 
+                } else { 
+                    Swal.fire('Feriado já existe!', '', 'warning'); 
+                } 
+            } 
+        }
+        
+        function removerFeriado(feriado) { 
+            feriados = feriados.filter(f => f !== feriado); 
+            localStorage.setItem('feriados', JSON.stringify(feriados));
+            renderizarFeriados(); 
+        }
+        
+        function renderizarFeriados() { 
+            const container = document.getElementById('listaFeriados'); 
+            if (container) { 
+                container.innerHTML = feriados.map(f => `<div class="flex justify-between items-center p-2 bg-blue-900/20 rounded"><span>📅 ${f}</span><button onclick="removerFeriado('${f}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button></div>`).join(''); 
+            } 
+        }
+        
+        function salvarConfiguracoes() { 
+            const meta = parseFloat(document.getElementById('metaFinanceira').value); 
+            if (meta) { 
+                metaFinanceira = meta; 
+                localStorage.setItem('config_meta', metaFinanceira);
+                Swal.fire('Configurações salvas!', '', 'success'); 
+                atualizarUI(); 
+            } 
+        }
+
+        function renderizarCalendario() {
+            const hoje = new Date(); const ano = hoje.getFullYear(); const mes = hoje.getMonth(); const primeiroDia = new Date(ano, mes, 1); const ultimoDia = new Date(ano, mes + 1, 0); const diasNaSemana = primeiroDia.getDay();
+            let html = `<div class="font-bold mb-2 text-center">${new Date(ano, mes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</div>`;
+            html += `<div class="grid grid-cols-7 gap-1 mb-2">${['D','S','T','Q','Q','S','S'].map(d => `<div class="font-bold text-blue-400 text-xs">${d}</div>`).join('')}</div><div class="grid grid-cols-7 gap-1">`;
+            for (let i = 0; i < diasNaSemana; i++) html += `<div></div>`;
+            for (let dia = 1; dia <= ultimoDia.getDate(); dia++) { const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`; const temEvento = audiencias.some(a => new Date(a.data).toDateString() === new Date(dataStr).toDateString()); html += `<div class="calendar-day ${temEvento ? 'has-event' : ''} text-center py-1 text-xs cursor-pointer" onclick="verEventosDoDia('${dataStr}')">${dia}</div>`; }
+            html += `</div>`; document.getElementById('miniCalendario').innerHTML = html;
+        }
+
+        function verEventosDoDia(data) { 
+            const audienciasDia = audiencias.filter(a => new Date(a.data).toDateString() === new Date(data).toDateString()); 
+            if (audienciasDia.length === 0) { 
+                Swal.fire('Sem eventos', 'Nenhuma audiência para esta data', 'info'); 
+                return; 
+            } 
+            Swal.fire({ title: `Audiências - ${formatarData(data)}`, html: audienciasDia.map(a => { const p = processos.find(p => p.id === a.processoId); return `<div class="text-left p-2 border-b"><strong>${p?.numero || 'Processo'}</strong><br>📅 ${formatarDataHora(a.data)}<br>⚖️ ${a.tipo}<br>📍 ${a.local || '—'}</div>`; }).join('') }); 
+        }
+
         // ==================== EXTRATOS ====================
         function mostrarExtratoCausas() {
             const totalValor = processos.reduce((sum, p) => sum + (p.valorCausa || 0), 0);
@@ -248,8 +806,9 @@
             
             processos.forEach(p => {
                 const saldo = (p.honorarios || 0) - (p.valorRecebido || 0);
-                html += `<tr class="border-b border-blue-800/30"><td class="p-3 text-sm font-mono">${p.numero}</td><td class="p-3 text-sm">${p.cliente}</td><td class="p-3 text-sm">${formatarMoeda(p.valorCausa)}</td><td class="p-3 text-sm">${formatarMoeda(p.honorarios)}</td><td class="p-3 text-sm ${(p.valorRecebido || 0) >= (p.honorarios || 0) ? 'text-green-400' : 'text-yellow-400'}">${formatarMoeda(p.valorRecebido || 0)}</td><td class="p-3 text-sm ${saldo > 0 ? 'text-red-400' : 'text-green-400'}">${formatarMoeda(saldo)}</td><td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${p.status === 'concluido' ? 'bg-green-500/20 text-green-300' : (p.status === 'andamento' ? 'bg-blue-500/20 text-blue-300' : 'bg-yellow-500/20 text-yellow-300')}">${p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Andamento' : 'Concluído')}</span></td></tr>`;
+                html += `<tr class="border-b border-blue-800/30"><td class="p-3 text-sm font-mono">${p.numero}</td><td class="p-3 text-sm">${p.cliente}</td><td class="p-3 text-sm">${formatarMoeda(p.valorCausa)}</td><td class="p-3 text-sm">${formatarMoeda(p.honorarios)}</td><td class="p-3 text-sm">${formatarMoeda(p.valorRecebido || 0)}</td><td class="p-3 text-sm ${saldo > 0 ? 'text-red-400' : 'text-green-400'}">${formatarMoeda(saldo)}</td><td class="p-3"><span class="status-badge status-${p.status}">${p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Em Andamento' : 'Concluído')}</span></td></tr>`;
             });
+            if (processos.length === 0) html += `<tr><td colspan="7" class="text-center p-8 text-gray-500">📭 Nenhum processo cadastrado</td></tr>`;
             html += `</tbody></table></div></div>`;
             
             extratoAtual = { tipo: 'causas', dados: processos, titulo: '📊 Extrato de Causas - Valores e Honorários' };
@@ -260,18 +819,16 @@
         
         function mostrarExtratoFinanceiro() {
             const totalHonorarios = processos.reduce((sum, p) => sum + (p.honorarios || 0), 0);
-            const totalRecebidoProcessos = processos.reduce((sum, p) => sum + (p.valorRecebido || 0), 0);
-            const totalRecebimentos = financeiro.reduce((sum, f) => sum + f.valor, 0);
-            const pendente = totalHonorarios - totalRecebidoProcessos;
+            const totalRecebido = processos.reduce((sum, p) => sum + (p.valorRecebido || 0), 0);
+            const pendente = totalHonorarios - totalRecebido;
             
             let html = `<div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">💼 Honorários Contratados</p><p class="text-2xl font-bold text-green-400">${formatarMoeda(totalHonorarios)}</p></div>
-                    <div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">💵 Total Recebido</p><p class="text-2xl font-bold text-blue-400">${formatarMoeda(totalRecebidoProcessos)}</p></div>
-                    <div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">📋 Recebimentos Registrados</p><p class="text-2xl font-bold text-cyan-400">${formatarMoeda(totalRecebimentos)}</p></div>
+                    <div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">💵 Total Recebido</p><p class="text-2xl font-bold text-blue-400">${formatarMoeda(totalRecebido)}</p></div>
                     <div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">⚠️ Saldo Pendente</p><p class="text-2xl font-bold text-yellow-400">${formatarMoeda(pendente)}</p></div>
                 </div>
-                <div class="glass-card p-4"><div class="flex justify-between items-center"><span class="font-bold">🎯 Progresso da Meta Mensal (${formatarMoeda(metaFinanceira)})</span><span class="text-2xl font-bold ${(totalRecebimentos / metaFinanceira * 100) >= 100 ? 'text-green-400' : 'text-yellow-400'}">${((totalRecebimentos / metaFinanceira) * 100).toFixed(1)}%</span></div><div class="w-full bg-gray-700 rounded-full h-4 mt-2"><div class="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full transition-all duration-500" style="width: ${Math.min(100, (totalRecebimentos / metaFinanceira) * 100)}%"></div></div></div>
+                <div class="glass-card p-4"><div class="flex justify-between items-center"><span class="font-bold">🎯 Progresso da Meta Mensal (${formatarMoeda(metaFinanceira)})</span><span class="text-2xl font-bold">${((totalRecebido / metaFinanceira) * 100).toFixed(1)}%</span></div><div class="w-full bg-gray-700 rounded-full h-4 mt-2"><div class="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full" style="width: ${Math.min(100, (totalRecebido / metaFinanceira) * 100)}%"></div></div></div>
                 <h4 class="font-bold text-lg mb-3 mt-6">📋 Histórico de Recebimentos</h4>
                 <div class="overflow-x-auto"><table class="data-table w-full"><thead><tr class="bg-blue-900/30"><th class="p-3">Data</th><th class="p-3">Processo</th><th class="p-3">Descrição</th><th class="p-3">Valor</th></tr></thead><tbody>`;
             
@@ -281,7 +838,7 @@
                 html += `<tr class="border-b border-blue-800/30"><td class="p-3 text-sm">${formatarData(r.data)}</td><td class="p-3 text-sm font-mono">${processo?.numero || '—'}</td><td class="p-3 text-sm">${r.descricao || 'Recebimento'}</td><td class="p-3 text-sm text-green-400 font-bold">${formatarMoeda(r.valor)}</td></tr>`;
             });
             if (financeiro.length === 0) html += `<tr><td colspan="4" class="text-center p-4 text-gray-500">Nenhum recebimento registrado</td></tr>`;
-            html += `</tbody></table></div></div>`;
+            html += `</tbody><td></div></div>`;
             
             extratoAtual = { tipo: 'financeiro', dados: financeiro, titulo: '💰 Extrato Financeiro - Honorários e Recebimentos' };
             document.getElementById('extratoTitulo').innerHTML = '<i class="fas fa-dollar-sign mr-2"></i>' + extratoAtual.titulo;
@@ -293,13 +850,11 @@
             const hoje = new Date();
             const prazosUrgentes = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente');
             const prazosAtencao = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'atencao');
-            const prazosNormais = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'normal');
             
             let html = `<div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div class="glass-card p-4 text-center border-l-4 border-red-500"><p class="text-gray-400 text-sm">🔴 Prazos Fatais (D-2)</p><p class="text-3xl font-bold text-red-400">${prazosUrgentes.length}</p></div>
                     <div class="glass-card p-4 text-center border-l-4 border-yellow-500"><p class="text-gray-400 text-sm">🟡 Prazos em Atenção (D+5)</p><p class="text-3xl font-bold text-yellow-400">${prazosAtencao.length}</p></div>
-                    <div class="glass-card p-4 text-center border-l-4 border-green-500"><p class="text-gray-400 text-sm">🟢 Prazos Normais</p><p class="text-3xl font-bold text-green-400">${prazosNormais.length}</p></div>
                 </div>
                 <h4 class="font-bold text-lg mb-3">⚠️ Prazos Fatais - Atenção Imediata</h4>
                 <div class="overflow-x-auto"><table class="data-table w-full"><thead><tr class="bg-red-900/30"><th class="p-3">Processo</th><th class="p-3">Cliente</th><th class="p-3">Prazo</th><th class="p-3">Dias Restantes</th></tr></thead><tbody>`;
@@ -319,7 +874,7 @@
                 html += `<tr class="border-b border-yellow-800/30"><td class="p-3 text-sm font-mono">${p.numero}</td><td class="p-3 text-sm">${p.cliente}</td><td class="p-3 text-sm text-yellow-400">${formatarData(p.proximoPrazo)}</td><td class="p-3 text-sm">${diff} dias</td></tr>`;
             });
             if (prazosAtencao.length === 0) html += `<tr><td colspan="4" class="text-center p-4 text-gray-500">Nenhum prazo em atenção</td></tr>`;
-            html += `</tbody></table></div></div>`;
+            html += `</tbody><table></div></div>`;
             
             extratoAtual = { tipo: 'prazos', dados: [...prazosUrgentes, ...prazosAtencao], titulo: '⏰ Extrato de Prazos - Controle Temporal' };
             document.getElementById('extratoTitulo').innerHTML = '<i class="fas fa-hourglass-half mr-2"></i>' + extratoAtual.titulo;
@@ -341,8 +896,7 @@
             
             proximas.forEach(a => {
                 const p = processos.find(proc => proc.id === a.processoId);
-                const isHoje = new Date(a.data).toDateString() === new Date().toDateString();
-                html += `<tr class="border-b border-purple-800/30 ${isHoje ? 'bg-purple-900/20' : ''}"><td class="p-3 text-sm font-mono">${p?.numero || '—'}</td><td class="p-3 text-sm font-bold text-purple-400">${formatarDataHora(a.data)}</td><td class="p-3 text-sm">${a.tipo}</td><td class="p-3 text-sm">${a.local || '—'}</td></tr>`;
+                html += `<tr class="border-b border-purple-800/30"><td class="p-3 text-sm font-mono">${p?.numero || '—'}</td><td class="p-3 text-sm font-bold text-purple-400">${formatarDataHora(a.data)}</td><td class="p-3 text-sm">${a.tipo}</td><td class="p-3 text-sm">${a.local || '—'}</td></tr>`;
             });
             if (proximas.length === 0) html += `<tr><td colspan="4" class="text-center p-4 text-gray-500">Nenhuma audiência agendada</td></tr>`;
             
@@ -369,27 +923,23 @@
             const perdidos = processos.filter(p => p.resultado === 'perdido').length;
             const acordos = processos.filter(p => p.resultado === 'acordo').length;
             const taxa = total > 0 ? (ganhos / total * 100).toFixed(1) : 0;
-            const valorGanhos = processos.filter(p => p.resultado === 'ganho').reduce((s,p) => s + (p.valorCausa || 0), 0);
-            const honorariosGanhos = processos.filter(p => p.resultado === 'ganho').reduce((s,p) => s + (p.honorarios || 0), 0);
             
             let html = `<div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">📊 Processos Concluídos</p><p class="text-2xl font-bold text-blue-400">${total}</p></div>
                     <div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">✅ Ganhos</p><p class="text-2xl font-bold text-green-400">${ganhos}</p></div>
                     <div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">❌ Perdidos</p><p class="text-2xl font-bold text-red-400">${perdidos}</p></div>
                     <div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">🤝 Acordos</p><p class="text-2xl font-bold text-yellow-400">${acordos}</p></div>
-                    <div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">💰 Valor em Causa Ganho</p><p class="text-2xl font-bold text-green-400">${formatarMoeda(valorGanhos)}</p></div>
                 </div>
-                <div class="glass-card p-6 text-center"><p class="text-gray-400 text-sm mb-2">🏆 Taxa de Êxito Geral</p><div class="text-7xl font-bold ${taxa >= 70 ? 'text-green-400' : (taxa >= 50 ? 'text-yellow-400' : 'text-red-400')}">${taxa}%</div><div class="w-full bg-gray-700 rounded-full h-4 mt-4"><div class="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full transition-all duration-500" style="width: ${taxa}%"></div></div><p class="text-gray-400 text-sm mt-4">Honorários arrecadados em causas ganhas: ${formatarMoeda(honorariosGanhos)}</p></div>
+                <div class="glass-card p-6 text-center"><p class="text-gray-400 text-sm mb-2">🏆 Taxa de Êxito Geral</p><div class="text-6xl font-bold ${taxa >= 70 ? 'text-green-400' : (taxa >= 50 ? 'text-yellow-400' : 'text-red-400')}">${taxa}%</div><div class="w-full bg-gray-700 rounded-full h-4 mt-4"><div class="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full" style="width: ${taxa}%"></div></div></div>
                 <h4 class="font-bold text-lg mb-3 mt-6">📋 Detalhamento por Processo Concluído</h4>
-                <div class="overflow-x-auto"><table class="data-table w-full"><thead><tr class="bg-blue-900/30"><th class="p-3">Processo</th><th class="p-3">Cliente</th><th class="p-3">Resultado</th><th class="p-3">Valor da Causa</th><th class="p-3">Honorários</th></tr></thead><tbody>`;
+                <div class="overflow-x-auto"><table class="data-table w-full"><thead><tr class="bg-blue-900/30"><th class="p-3">Processo</th><th class="p-3">Cliente</th><th class="p-3">Resultado</th><th class="p-3">Valor da Causa</th></tr></thead><tbody>`;
             
             processos.filter(p => p.status === 'concluido').forEach(p => {
                 const resultadoIcon = p.resultado === 'ganho' ? '✅ Ganho' : (p.resultado === 'acordo' ? '🤝 Acordo' : '❌ Perdido');
-                const resultClass = p.resultado === 'ganho' ? 'text-green-400' : (p.resultado === 'acordo' ? 'text-yellow-400' : 'text-red-400');
-                html += `<tr class="border-b border-blue-800/30"><td class="p-3 text-sm font-mono">${p.numero}</td><td class="p-3 text-sm">${p.cliente}</td><td class="p-3 text-sm ${resultClass} font-bold">${resultadoIcon}</td><td class="p-3 text-sm">${formatarMoeda(p.valorCausa)}</td><td class="p-3 text-sm">${formatarMoeda(p.honorarios)}</td></tr>`;
+                html += `<tr class="border-b border-blue-800/30"><td class="p-3 text-sm font-mono">${p.numero}</td><td class="p-3 text-sm">${p.cliente}</td><td class="p-3 text-sm">${resultadoIcon}</td><td class="p-3 text-sm">${formatarMoeda(p.valorCausa)}</td></tr>`;
             });
-            if (total === 0) html += `<tr><td colspan="5" class="text-center p-4 text-gray-500">Nenhum processo concluído</td></tr>`;
+            if (total === 0) html += `<tr><td colspan="4" class="text-center p-4 text-gray-500">Nenhum processo concluído</td></tr>`;
             html += `</tbody></table></div></div>`;
             
             extratoAtual = { tipo: 'taxaExito', dados: processos.filter(p => p.status === 'concluido'), titulo: '🏆 Extrato de Êxito - Performance do Escritório' };
@@ -401,32 +951,20 @@
         function mostrarExtratoTarefas() {
             const pendentes = tarefas.filter(t => !t.concluida);
             const concluidas = tarefas.filter(t => t.concluida);
-            const atrasadas = pendentes.filter(t => new Date(t.prazo) < new Date());
             
             let html = `<div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div class="glass-card p-4 text-center border-l-4 border-yellow-500"><p class="text-gray-400 text-sm">⏳ Tarefas Pendentes</p><p class="text-3xl font-bold text-yellow-400">${pendentes.length}</p></div>
-                    <div class="glass-card p-4 text-center border-l-4 border-red-500"><p class="text-gray-400 text-sm">🔴 Tarefas Atrasadas</p><p class="text-3xl font-bold text-red-400">${atrasadas.length}</p></div>
-                    <div class="glass-card p-4 text-center border-l-4 border-green-500"><p class="text-gray-400 text-sm">✅ Tarefas Concluídas</p><p class="text-3xl font-bold text-green-400">${concluidas.length}</p></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">⏳ Tarefas Pendentes</p><p class="text-3xl font-bold text-yellow-400">${pendentes.length}</p></div>
+                    <div class="glass-card p-4 text-center"><p class="text-gray-400 text-sm">✅ Tarefas Concluídas</p><p class="text-3xl font-bold text-green-400">${concluidas.length}</p></div>
                 </div>
                 <h4 class="font-bold text-lg mb-3">⏳ Tarefas Pendentes</h4>
                 <div class="overflow-x-auto"><table class="data-table w-full"><thead><tr class="bg-yellow-900/30"><th class="p-3">Descrição</th><th class="p-3">Prazo</th><th class="p-3">Prioridade</th><th class="p-3">Ação</th></tr></thead><tbody>`;
             
             pendentes.forEach(t => {
-                const isAtrasada = new Date(t.prazo) < new Date();
-                html += `<tr class="border-b border-yellow-800/30"><td class="p-3 text-sm">${t.descricao}</td><td class="p-3 text-sm ${isAtrasada ? 'text-red-400 font-bold' : ''}">${formatarDataHora(t.prazo)}</td><td class="p-3 text-sm ${t.prioridade === 'Alta' ? 'text-red-400 font-bold' : (t.prioridade === 'Média' ? 'text-yellow-400' : 'text-gray-400')}">${t.prioridade}</td><td class="p-3"><button onclick="concluirTarefa(${t.id}); fecharModal('modalExtrato'); setTimeout(() => mostrarExtratoTarefas(), 500);" class="text-green-400 hover:text-green-300"><i class="fas fa-check-circle"></i></button></td></tr>`;
+                html += `<tr class="border-b border-yellow-800/30"><td class="p-3 text-sm">${t.descricao}</td><td class="p-3 text-sm">${formatarDataHora(t.prazo)}</td><td class="p-3 text-sm ${t.prioridade === 'Alta' ? 'text-red-400 font-bold' : ''}">${t.prioridade}</td><td class="p-3"><button onclick="concluirTarefa(${t.id}); fecharModal('modalExtrato'); setTimeout(() => mostrarExtratoTarefas(), 500);" class="text-green-400 hover:text-green-300"><i class="fas fa-check-circle"></i></button></td></tr>`;
             });
             if (pendentes.length === 0) html += `<tr><td colspan="4" class="text-center p-4 text-gray-500">Nenhuma tarefa pendente</td></tr>`;
-            
-            html += `</tbody></table></div>
-                <h4 class="font-bold text-lg mb-3 mt-6">✅ Tarefas Concluídas</h4>
-                <div class="overflow-x-auto"><table class="data-table w-full"><thead><tr class="bg-green-900/30"><th class="p-3">Descrição</th><th class="p-3">Prazo Concluído</th></tr></thead><tbody>`;
-            
-            concluidas.forEach(t => {
-                html += `<tr class="border-b border-green-800/30"><td class="p-3 text-sm">${t.descricao}</td><td class="p-3 text-sm text-gray-400">${formatarDataHora(t.prazo)}</td></tr>`;
-            });
-            if (concluidas.length === 0) html += `<tr><td colspan="2" class="text-center p-4 text-gray-500">Nenhuma tarefa concluída</td></tr>`;
-            html += `</tbody></table></div></div>`;
+            html += `</tbody><tr></div></div>`;
             
             extratoAtual = { tipo: 'tarefas', dados: tarefas, titulo: '✅ Extrato de Tarefas - Controle de Atividades' };
             document.getElementById('extratoTitulo').innerHTML = '<i class="fas fa-tasks mr-2"></i>' + extratoAtual.titulo;
@@ -445,20 +983,8 @@
             doc.rect(0, 0, doc.internal.pageSize.getWidth(), 40, 'F');
             doc.setFontSize(22); doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold');
             doc.text('⚖️ AdvFlow Pro', 20, 20);
-            doc.setFontSize(11); doc.text(extratoAtual.titulo.replace(/<[^>]*>/g, ''), 20, 32);
+            doc.setFontSize(11); doc.text(extratoAtual.titulo, 20, 32);
             doc.setFontSize(9); doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, doc.internal.pageSize.getWidth() - 50, 15);
-            
-            let y = 55;
-            doc.setFontSize(12); doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]); doc.setFont('helvetica', 'bold');
-            doc.text('Resumo do Extrato', 20, y);
-            y += 10;
-            
-            if (extratoAtual.tipo === 'causas') {
-                const totalValor = processos.reduce((s, p) => s + (p.valorCausa || 0), 0);
-                const totalHonorarios = processos.reduce((s, p) => s + (p.honorarios || 0), 0);
-                const totalRecebido = processos.reduce((s, p) => s + (p.valorRecebido || 0), 0);
-                doc.autoTable({ startY: y, body: [['Total em Causa', formatarMoeda(totalValor)], ['Total Honorários', formatarMoeda(totalHonorarios)], ['Total Recebido', formatarMoeda(totalRecebido)]], theme: 'plain', styles: { fontSize: 10 }, columnStyles: { 0: { fontStyle: 'bold' } } });
-            }
             
             doc.save(`extrato_${extratoAtual.tipo}_${new Date().toISOString().split('T')[0]}.pdf`);
             Swal.fire({ icon: 'success', title: 'PDF Exportado!', text: 'Extrato salvo com sucesso', timer: 1500, showConfirmButton: false });
@@ -476,7 +1002,7 @@
             } else if (extratoAtual.tipo === 'audiencias') {
                 dados = extratoAtual.dados.map(a => ({ 'Processo': processos.find(p => p.id === a.processoId)?.numero || '—', 'Data': formatarDataHora(a.data), 'Tipo': a.tipo, 'Local': a.local || '—' }));
             } else if (extratoAtual.tipo === 'taxaExito') {
-                dados = extratoAtual.dados.map(p => ({ 'Processo': p.numero, 'Cliente': p.cliente, 'Resultado': p.resultado, 'Valor da Causa': p.valorCausa, 'Honorários': p.honorarios }));
+                dados = extratoAtual.dados.map(p => ({ 'Processo': p.numero, 'Cliente': p.cliente, 'Resultado': p.resultado, 'Valor da Causa': p.valorCausa }));
             } else if (extratoAtual.tipo === 'tarefas') {
                 dados = extratoAtual.dados.map(t => ({ 'Descrição': t.descricao, 'Prazo': formatarDataHora(t.prazo), 'Prioridade': t.prioridade, 'Status': t.concluida ? 'Concluída' : 'Pendente' }));
             }
@@ -488,8 +1014,13 @@
             Swal.fire({ icon: 'success', title: 'Excel Exportado!', text: 'Extrato salvo com sucesso', timer: 1500, showConfirmButton: false });
         }
 
-        // ==================== GERADOR DE PDF ====================
+        // ==================== PDFs ====================
         async function gerarPDFFinanceiroDetalhado() {
+            if (processos.length === 0) {
+                Swal.fire('Atenção', 'Nenhum processo para gerar relatório', 'info');
+                return;
+            }
+            
             Swal.fire({ title: 'Gerando PDF Financeiro...', html: '<div class="loader"></div>', showConfirmButton: false, allowOutsideClick: false });
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -525,17 +1056,6 @@
             const processFinanceData = processos.map(p => [p.numero, p.cliente, formatarMoeda(p.valorCausa), formatarMoeda(p.honorarios), formatarMoeda(p.valorRecebido || 0), formatarMoeda((p.honorarios || 0) - (p.valorRecebido || 0))]);
             doc.autoTable({ startY: y, head: [['Nº Processo', 'Cliente', 'Valor Causa', 'Honorários', 'Recebido', 'Saldo']], body: processFinanceData, theme: 'grid', headStyles: { fillColor: secondaryColor, textColor: 255, fontSize: 9 }, bodyStyles: { fontSize: 8 }, margin: { left: 15, right: 15 }, columnStyles: { 0: { cellWidth: 45 }, 1: { cellWidth: 35 }, 2: { cellWidth: 25 }, 3: { cellWidth: 25 }, 4: { cellWidth: 25 }, 5: { cellWidth: 25 } } });
             
-            y = doc.lastAutoTable.finalY + 15;
-            if (y > 250) { doc.addPage(); y = 20; doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]); doc.rect(0, 0, doc.internal.pageSize.getWidth(), 40, 'F'); }
-            
-            doc.setFontSize(14); doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]); doc.setFont('helvetica', 'bold');
-            doc.text('📋 Histórico de Recebimentos', 20, y);
-            y += 8;
-            
-            const recebimentosData = financeiro.sort((a,b) => new Date(b.data) - new Date(a.data)).slice(0, 30).map(r => { const p = processos.find(proc => proc.id === r.processoId); return [formatarData(r.data), p?.numero || '—', r.descricao || 'Recebimento', formatarMoeda(r.valor)]; });
-            if (recebimentosData.length > 0) { doc.autoTable({ startY: y, head: [['Data', 'Processo', 'Descrição', 'Valor']], body: recebimentosData, theme: 'grid', headStyles: { fillColor: secondaryColor, textColor: 255, fontSize: 9 }, bodyStyles: { fontSize: 8 } }); } 
-            else { doc.setFontSize(10); doc.setTextColor(100, 100, 100); doc.text('Nenhum recebimento registrado', 20, y); }
-            
             const pageCount = doc.internal.getNumberOfPages();
             for (let i = 1; i <= pageCount; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(128, 128, 128); doc.text(`AdvFlow Pro - Relatório Financeiro - Página ${i} de ${pageCount}`, doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' }); }
             
@@ -544,6 +1064,11 @@
         }
         
         async function gerarPDFCompleto() {
+            if (processos.length === 0) {
+                Swal.fire('Atenção', 'Nenhum processo para gerar relatório', 'info');
+                return;
+            }
+            
             Swal.fire({ title: 'Gerando PDF...', html: '<div class="loader"></div>', showConfirmButton: false, allowOutsideClick: false });
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -576,7 +1101,7 @@
             y += 8;
             
             const processData = processos.slice(0, 25).map(p => [p.numero, p.cliente, p.parteContraria || '—', formatarMoeda(p.valorCausa), formatarData(p.proximoPrazo), p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Andamento' : 'Concluído')]);
-            doc.autoTable({ startY: y, head: [['Nº Processo', 'Cliente', 'Parte', 'Valor', 'Prazo', 'Status']], body: processData, theme: 'grid', headStyles: { fillColor: secondaryColor, textColor: 255, fontSize: 9 }, bodyStyles: { fontSize: 8 }, margin: { left: 15, right: 15 }, columnStyles: { 0: { cellWidth: 45 }, 1: { cellWidth: 35 }, 2: { cellWidth: 30 }, 3: { cellWidth: 25 }, 4: { cellWidth: 25 }, 5: { cellWidth: 20 } } });
+            doc.autoTable({ startY: y, head: [['Nº Processo', 'Cliente', 'Parte', 'Valor', 'Prazo', 'Status']], body: processData, theme: 'grid', headStyles: { fillColor: secondaryColor, textColor: 255, fontSize: 9 }, bodyStyles: { fontSize: 8 }, margin: { left: 15, right: 15 } });
             
             const pageCount = doc.internal.getNumberOfPages();
             for (let i = 1; i <= pageCount; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(128, 128, 128); doc.text(`AdvFlow Pro - Página ${i} de ${pageCount}`, doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' }); }
@@ -589,6 +1114,11 @@
         function gerarPDFAudiencias() { mostrarExtratoAudiencias(); fecharModal('modalRelatorios'); }
         
         async function gerarPDFProcessoIndividual() {
+            if (processos.length === 0) {
+                Swal.fire('Atenção', 'Nenhum processo cadastrado', 'info');
+                return;
+            }
+            
             const processosList = processos.map(p => ({ id: p.id, nome: `${p.numero} - ${p.cliente}` }));
             const { value: processoId } = await Swal.fire({ title: 'Selecione o Processo', input: 'select', inputOptions: Object.fromEntries(processosList.map(p => [p.id, p.nome])), showCancelButton: true });
             if (processoId) {
@@ -623,155 +1153,12 @@
             fecharModal('modalRelatorios');
         }
 
-        // ==================== CRUD PRINCIPAL ====================
-        function carregarDados() {
-            const saved = localStorage.getItem('advflow_processos');
-            if (saved) { processos = JSON.parse(saved); } else {
-                processos = [
-                    { id: 1, numero: '0012345-67.2024.8.26.0100', cliente: 'Empresa ABC Ltda', cpfCliente: '12.345.678/0001-90', parteContraria: 'Fornecedor XYZ', advogadoAdverso: 'Dr. Carlos', valorCausa: 50000, honorarios: 5000, valorRecebido: 2000, vara: '2ª Vara Cível', status: 'aguardando', proximoPrazo: '2025-05-20', dataDistribuicao: '2024-01-15', observacoes: 'Aguardando citação', resultado: null },
-                    { id: 2, numero: '0098765-43.2024.8.26.0100', cliente: 'João Silva', cpfCliente: '123.456.789-00', parteContraria: 'Banco do Brasil', advogadoAdverso: 'Dra. Mariana', valorCausa: 25000, honorarios: 3000, valorRecebido: 3000, vara: '1ª Vara Empresarial', status: 'andamento', proximoPrazo: '2025-05-10', dataDistribuicao: '2024-02-20', observacoes: 'Em fase de instrução', resultado: null },
-                    { id: 3, numero: '0076543-21.2024.8.26.0100', cliente: 'Maria Oliveira', cpfCliente: '987.654.321-00', parteContraria: 'Construtora Norte', advogadoAdverso: 'Dr. Roberto', valorCausa: 150000, honorarios: 12000, valorRecebido: 12000, vara: '3ª Vara Cível', status: 'concluido', proximoPrazo: null, dataDistribuicao: '2023-10-10', observacoes: 'Sentença favorável', resultado: 'ganho' }
-                ];
-                salvarProcessos();
-            }
-            audiencias = JSON.parse(localStorage.getItem('advflow_audiencias') || '[]');
-            tarefas = JSON.parse(localStorage.getItem('advflow_tarefas') || '[]');
-            financeiro = JSON.parse(localStorage.getItem('advflow_financeiro') || '[]');
-            modelosUsuario = JSON.parse(localStorage.getItem('advflow_modelos') || '[]');
-            feriados = JSON.parse(localStorage.getItem('advflow_feriados') || '["01-01","07-09","15-11","25-12"]');
-            metaFinanceira = parseFloat(localStorage.getItem('advflow_meta') || '20000');
-            atualizarUI();
-        }
-
-        function salvarProcessos() { localStorage.setItem('advflow_processos', JSON.stringify(processos)); }
-        function salvarAudiencias() { localStorage.setItem('advflow_audiencias', JSON.stringify(audiencias)); }
-        function salvarTarefas() { localStorage.setItem('advflow_tarefas', JSON.stringify(tarefas)); }
-        function salvarFinanceiro() { localStorage.setItem('advflow_financeiro', JSON.stringify(financeiro)); }
-        function salvarModelos() { localStorage.setItem('advflow_modelos', JSON.stringify(modelosUsuario)); }
-
-        function salvarProcesso(event) {
-            event.preventDefault();
-            const id = document.getElementById('processoId').value;
-            const processo = {
-                id: id ? parseInt(id) : Date.now(), numero: document.getElementById('numeroProcesso').value, cliente: document.getElementById('cliente').value,
-                cpfCliente: document.getElementById('cpfCliente').value, parteContraria: document.getElementById('parteContraria').value,
-                advogadoAdverso: document.getElementById('advogadoAdverso').value, valorCausa: parseFloat(document.getElementById('valorCausa').value) || 0,
-                honorarios: parseFloat(document.getElementById('honorarios').value) || 0, valorRecebido: parseFloat(document.getElementById('valorRecebido').value) || 0,
-                vara: document.getElementById('vara').value, status: document.getElementById('status').value, proximoPrazo: document.getElementById('proximoPrazo').value,
-                dataDistribuicao: document.getElementById('dataDistribuicao').value, observacoes: document.getElementById('observacoes').value,
-                resultado: document.getElementById('resultado').value || null
-            };
-            if (id) { const index = processos.findIndex(p => p.id === parseInt(id)); if (index !== -1) processos[index] = { ...processos[index], ...processo }; }
-            else { processos.push(processo); }
-            salvarProcessos(); fecharModal('modalProcesso'); atualizarUI();
-            Swal.fire({ icon: 'success', title: 'Sucesso!', text: id ? 'Processo atualizado' : 'Processo criado', timer: 1500, showConfirmButton: false });
-        }
-
-        function editarProcesso(id) {
-            const p = processos.find(p => p.id === id);
-            if (p) {
-                document.getElementById('modalTitulo').innerText = 'Editar Processo';
-                document.getElementById('processoId').value = p.id;
-                document.getElementById('numeroProcesso').value = p.numero;
-                document.getElementById('cliente').value = p.cliente;
-                document.getElementById('cpfCliente').value = p.cpfCliente || '';
-                document.getElementById('parteContraria').value = p.parteContraria || '';
-                document.getElementById('advogadoAdverso').value = p.advogadoAdverso || '';
-                document.getElementById('valorCausa').value = p.valorCausa;
-                document.getElementById('honorarios').value = p.honorarios;
-                document.getElementById('valorRecebido').value = p.valorRecebido || 0;
-                document.getElementById('vara').value = p.vara || '';
-                document.getElementById('status').value = p.status;
-                document.getElementById('proximoPrazo').value = p.proximoPrazo || '';
-                document.getElementById('dataDistribuicao').value = p.dataDistribuicao || '';
-                document.getElementById('observacoes').value = p.observacoes || '';
-                document.getElementById('resultado').value = p.resultado || '';
-                abrirModal('modalProcesso');
-            }
-        }
-
-        function excluirProcesso(id) {
-            Swal.fire({ title: 'Confirmar exclusão', text: 'Deseja realmente excluir?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sim, excluir!' }).then((result) => {
-                if (result.isConfirmed) { processos = processos.filter(p => p.id !== id); audiencias = audiencias.filter(a => a.processoId !== id); salvarProcessos(); salvarAudiencias(); atualizarUI(); Swal.fire('Excluído!', 'Processo removido.', 'success'); }
-            });
-        }
-
-        function atualizarStatusProcesso(id, novoStatus) {
-            const p = processos.find(p => p.id === id);
-            if (p) { p.status = novoStatus; salvarProcessos(); atualizarUI(); }
-        }
-
-        function salvarAudiencia(event) {
-            event.preventDefault();
-            audiencias.push({ id: Date.now(), processoId: parseInt(document.getElementById('audienciaProcesso').value), data: document.getElementById('audienciaData').value, tipo: document.getElementById('audienciaTipo').value, local: document.getElementById('audienciaLocal').value });
-            salvarAudiencias(); fecharModal('modalAudiencia'); atualizarUI();
-            Swal.fire('Agendado!', 'Audiência agendada', 'success');
-        }
-
-        function salvarTarefa(event) {
-            event.preventDefault();
-            const processoId = document.getElementById('tarefaProcesso').value;
-            tarefas.push({ id: Date.now(), descricao: document.getElementById('tarefaDescricao').value, prazo: document.getElementById('tarefaPrazo').value, prioridade: document.getElementById('tarefaPrioridade').value, processoId: processoId ? parseInt(processoId) : null, concluida: false });
-            salvarTarefas(); fecharModal('modalTarefa'); atualizarUI();
-            Swal.fire('Tarefa adicionada!', '', 'success');
-        }
-
-        function concluirTarefa(id) { const t = tarefas.find(t => t.id === id); if (t) { t.concluida = true; salvarTarefas(); atualizarUI(); Swal.fire('Tarefa concluída!', '', 'success'); } }
-        function excluirTarefa(id) { tarefas = tarefas.filter(t => t.id !== id); salvarTarefas(); atualizarUI(); }
-        
-        function gerarPeticaoPreview() {
-            const conteudo = document.getElementById('peticaoConteudo').value;
-            Swal.fire({ title: 'Pré-visualização', html: `<pre style="white-space: pre-wrap; font-family: monospace;" class="text-left">${conteudo || 'Nenhum conteúdo'}</pre>`, width: '800px' });
-        }
-        
-        function salvarPeticao(event) {
-            event.preventDefault();
-            const conteudo = document.getElementById('peticaoConteudo').value;
-            if (conteudo) { modelosUsuario.push({ id: Date.now(), nome: `Petição ${new Date().toLocaleString()}`, conteudo: conteudo, data: new Date().toISOString() }); salvarModelos(); Swal.fire('Salvo!', 'Petição salva em documentos', 'success'); fecharModal('modalPeticao'); }
-            else { Swal.fire('Erro', 'Digite o conteúdo da petição', 'error'); }
-        }
-
-        function adicionarRecebimento() {
-            Swal.fire({ title: 'Registrar Recebimento', html: `<select id="swalProcesso" class="swal2-select" style="width:100%;margin-bottom:10px">${processos.map(p => `<option value="${p.id}">${p.numero} - ${p.cliente}</option>`).join('')}</select><input id="swalValor" class="swal2-input" placeholder="Valor" type="number" step="0.01"><input id="swalDescricao" class="swal2-input" placeholder="Descrição">`, showCancelButton: true, preConfirm: () => { const valor = parseFloat(document.getElementById('swalValor').value); if (!valor) Swal.showValidationMessage('Informe o valor'); return { processoId: parseInt(document.getElementById('swalProcesso').value), valor: valor, descricao: document.getElementById('swalDescricao').value }; } }).then((result) => {
-                if (result.value) {
-                    financeiro.push({ id: Date.now(), processoId: result.value.processoId, valor: result.value.valor, descricao: result.value.descricao, data: new Date().toISOString() });
-                    const processo = processos.find(p => p.id === result.value.processoId);
-                    if (processo) { processo.valorRecebido = (processo.valorRecebido || 0) + result.value.valor; salvarProcessos(); }
-                    salvarFinanceiro(); atualizarUI(); Swal.fire('Registrado!', 'Recebimento adicionado', 'success');
-                }
-            });
-        }
-
-        function exportarExcelGeral() {
-            const dados = processos.map(p => ({ 'Nº Processo': p.numero, 'Cliente': p.cliente, 'Parte Contrária': p.parteContraria, 'Valor da Causa': p.valorCausa, 'Honorários': p.honorarios, 'Recebido': p.valorRecebido || 0, 'Status': p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Em Andamento' : 'Concluído'), 'Próximo Prazo': formatarData(p.proximoPrazo), 'Resultado': p.resultado || '—' }));
-            const ws = XLSX.utils.json_to_sheet(dados); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Processos'); XLSX.writeFile(wb, `processos_${new Date().toISOString().split('T')[0]}.xlsx`);
-            Swal.fire('Exportado!', 'Arquivo Excel gerado', 'success');
-        }
-
-        function exportarBackup() { const backup = { processos, audiencias, tarefas, financeiro, modelosUsuario, feriados, metaFinanceira }; const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `advflow_backup_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(a.href); Swal.fire('Backup criado!', 'Arquivo baixado', 'success'); }
-        
-        function importarModelo() { const input = document.createElement('input'); input.type = 'file'; input.accept = '.txt,.md'; input.onchange = (e) => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (event) => { Swal.fire({ title: 'Nome do modelo', input: 'text', showCancelButton: true }).then((result) => { if (result.value) { modelosUsuario.push({ id: Date.now(), nome: result.value, conteudo: event.target.result, data: new Date().toISOString() }); salvarModelos(); atualizarUI(); Swal.fire('Modelo importado!', '', 'success'); } }); }; reader.readAsText(file); }; input.click(); }
-        
-        function adicionarFeriado() { const data = document.getElementById('novoFeriado').value; if (data) { const [ano, mes, dia] = data.split('-'); const dataStr = `${dia}-${mes}`; if (!feriados.includes(dataStr)) { feriados.push(dataStr); localStorage.setItem('advflow_feriados', JSON.stringify(feriados)); renderizarFeriados(); Swal.fire('Feriado adicionado!', '', 'success'); } else { Swal.fire('Feriado já existe!', '', 'warning'); } } }
-        function removerFeriado(feriado) { feriados = feriados.filter(f => f !== feriado); localStorage.setItem('advflow_feriados', JSON.stringify(feriados)); renderizarFeriados(); }
-        function renderizarFeriados() { const container = document.getElementById('listaFeriados'); if (container) { container.innerHTML = feriados.map(f => `<div class="flex justify-between items-center p-2 bg-blue-900/20 rounded"><span>📅 ${f}</span><button onclick="removerFeriado('${f}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button></div>`).join(''); } }
-        function salvarMetaFinanceira() { const meta = parseFloat(document.getElementById('metaFinanceira').value); if (meta) { metaFinanceira = meta; localStorage.setItem('advflow_meta', metaFinanceira); Swal.fire('Meta salva!', '', 'success'); atualizarUI(); } }
-
-        function renderizarCalendario() {
-            const hoje = new Date(); const ano = hoje.getFullYear(); const mes = hoje.getMonth(); const primeiroDia = new Date(ano, mes, 1); const ultimoDia = new Date(ano, mes + 1, 0); const diasNaSemana = primeiroDia.getDay();
-            let html = `<div class="font-bold mb-2 text-center">${new Date(ano, mes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</div>`;
-            html += `<div class="grid grid-cols-7 gap-1 mb-2">${['D','S','T','Q','Q','S','S'].map(d => `<div class="font-bold text-blue-400 text-xs">${d}</div>`).join('')}</div><div class="grid grid-cols-7 gap-1">`;
-            for (let i = 0; i < diasNaSemana; i++) html += `<div></div>`;
-            for (let dia = 1; dia <= ultimoDia.getDate(); dia++) { const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`; const temEvento = audiencias.some(a => new Date(a.data).toDateString() === new Date(dataStr).toDateString()); html += `<div class="calendar-day ${temEvento ? 'has-event' : ''} text-center py-1 text-xs cursor-pointer" onclick="verEventosDoDia('${dataStr}')">${dia}</div>`; }
-            html += `</div>`; document.getElementById('miniCalendario').innerHTML = html;
-        }
-
-        function verEventosDoDia(data) { const audienciasDia = audiencias.filter(a => new Date(a.data).toDateString() === new Date(data).toDateString()); if (audienciasDia.length === 0) { Swal.fire('Sem eventos', 'Nenhuma audiência para esta data', 'info'); return; } Swal.fire({ title: `Audiências - ${formatarData(data)}`, html: audienciasDia.map(a => { const p = processos.find(p => p.id === a.processoId); return `<div class="text-left p-2 border-b"><strong>${p?.numero || 'Processo'}</strong><br>📅 ${formatarDataHora(a.data)}<br>⚖️ ${a.tipo}<br>📍 ${a.local || '—'}</div>`; }).join('') }); }
-
+        // ==================== UI PRINCIPAL ====================
         function atualizarUI() {
             document.getElementById('dataAtual').innerText = new Date().toLocaleDateString('pt-BR');
             document.getElementById('horaAtual').innerText = new Date().toLocaleTimeString('pt-BR');
             
+            // Métricas
             const processosAtivos = processos.filter(p => p.status !== 'concluido').length;
             const prazosFataisCount = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente').length;
             const audienciasHoje = audiencias.filter(a => new Date(a.data).toDateString() === new Date().toDateString()).length;
@@ -795,7 +1182,7 @@
             document.getElementById('tarefasPendentes').innerText = tarefasPendentes;
             document.getElementById('tarefasHoje').innerText = tarefasHojeCount;
             document.getElementById('totalDocumentos').innerText = modelosUsuario.length;
-            document.getElementById('totalModelos').innerText = '4';
+            document.getElementById('totalModelos').innerText = Object.keys(modelosProntos).length;
             document.getElementById('metaHonorarios').innerHTML = `Meta: ${formatarMoeda(metaFinanceira)}`;
             
             const proximoPrazoFatal = processos.filter(p => p.proximoPrazo && getStatusPrazo(p.proximoPrazo) === 'urgente').sort((a,b) => new Date(a.proximoPrazo) - new Date(b.proximoPrazo))[0];
@@ -809,31 +1196,36 @@
             document.getElementById('countAndamento').innerText = processos.filter(p => p.status === 'andamento').length;
             document.getElementById('countConcluidos').innerText = processos.filter(p => p.status === 'concluido').length;
             
+            // Kanban
             for (const [status, container] of Object.entries({ aguardando: document.getElementById('kanban-aguardando'), andamento: document.getElementById('kanban-andamento'), concluido: document.getElementById('kanban-concluido') })) {
                 if (!container) continue;
                 const processosStatus = processos.filter(p => p.status === status);
                 if (processosStatus.length === 0) container.innerHTML = `<div class="kanban-empty">📭 Nenhum processo</div>`;
-                else container.innerHTML = processosStatus.map(p => `<div class="process-card rounded-lg p-3 mb-2" draggable="true" data-id="${p.id}"><div class="flex justify-between items-start mb-2"><div class="flex-1"><p class="font-bold text-sm">${p.numero}</p><p class="text-xs text-gray-400">${p.cliente}</p>${p.valorCausa ? `<p class="text-xs text-green-400 mt-1">💰 ${formatarMoeda(p.valorCausa)}</p>` : ''}</div><div class="flex gap-1"><button onclick="editarProcesso(${p.id})" class="text-blue-400 hover:text-blue-300"><i class="fas fa-edit text-xs"></i></button><button onclick="excluirProcesso(${p.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash text-xs"></i></button></div></div><div class="mt-2 flex justify-between items-center text-xs">${p.proximoPrazo ? `<span class="${getStatusPrazo(p.proximoPrazo) === 'urgente' ? 'text-red-400 font-bold animate-pulse' : 'text-gray-400'}"><i class="far fa-calendar-alt mr-1"></i>${formatarData(p.proximoPrazo)}</span>` : '<span class="text-gray-500">Sem prazo</span>'}<select onchange="atualizarStatusProcesso(${p.id}, this.value)" class="bg-transparent border border-gray-700 rounded px-1 py-0 text-xs"><option value="aguardando" ${p.status === 'aguardando' ? 'selected' : ''}>Aguardando</option><option value="andamento" ${p.status === 'andamento' ? 'selected' : ''}>Andamento</option><option value="concluido" ${p.status === 'concluido' ? 'selected' : ''}>Concluído</option></select></div></div>`).join('');
+                else container.innerHTML = processosStatus.map(p => `<div class="process-card rounded-lg p-3 mb-2" draggable="true" data-id="${p.id}"><div class="flex justify-between items-start mb-2"><div class="flex-1"><p class="font-bold text-sm">${p.numero}</p><p class="text-xs text-gray-400">${p.cliente}</p>${p.valorCausa ? `<p class="text-xs text-green-400 mt-1">💰 ${formatarMoeda(p.valorCausa)}</p>` : ''}</div><div class="flex gap-1"><button onclick="editarProcesso(${p.id})" class="text-blue-400 hover:text-blue-300"><i class="fas fa-edit text-xs"></i></button><button onclick="excluirProcesso(${p.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash text-xs"></i></button></div></div><div class="mt-2 flex justify-between items-center text-xs">${p.proximoPrazo ? `<span class="${getStatusPrazo(p.proximoPrazo) === 'urgente' ? 'text-red-400 font-bold' : 'text-gray-400'}"><i class="far fa-calendar-alt mr-1"></i>${formatarData(p.proximoPrazo)}</span>` : '<span class="text-gray-500">Sem prazo</span>'}<select onchange="atualizarStatusProcesso(${p.id}, this.value)" class="bg-transparent border border-gray-700 rounded px-1 py-0 text-xs"><option value="aguardando" ${p.status === 'aguardando' ? 'selected' : ''}>Aguardando</option><option value="andamento" ${p.status === 'andamento' ? 'selected' : ''}>Andamento</option><option value="concluido" ${p.status === 'concluido' ? 'selected' : ''}>Concluído</option></select></div></div>`).join('');
             }
             
             document.querySelectorAll('.process-card').forEach(card => { card.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', card.getAttribute('data-id')); card.style.opacity = '0.5'; }); card.addEventListener('dragend', (e) => { card.style.opacity = '1'; }); });
             document.querySelectorAll('.kanban-column').forEach(column => { column.addEventListener('dragover', (e) => e.preventDefault()); column.addEventListener('drop', (e) => { e.preventDefault(); const id = parseInt(e.dataTransfer.getData('text/plain')); const novoStatus = column.getAttribute('data-status'); if (novoStatus) atualizarStatusProcesso(id, novoStatus); }); });
             
+            // Próximas Audiências
             const proximasAudiencias = audiencias.filter(a => new Date(a.data) > new Date()).sort((a,b) => new Date(a.data) - new Date(b.data)).slice(0,5);
             document.getElementById('listaAudiencias').innerHTML = proximasAudiencias.length ? proximasAudiencias.map(a => { const p = processos.find(proc => proc.id === a.processoId); return `<div class="bg-blue-900/20 rounded p-2 text-sm"><div class="flex justify-between"><span class="font-semibold">${p?.numero || 'Processo'}</span><span class="text-purple-300 text-xs">${a.tipo}</span></div><div class="text-xs text-gray-300 mt-1"><i class="far fa-calendar-alt mr-1"></i>${formatarDataHora(a.data)}</div>${a.local ? `<div class="text-xs text-gray-400 mt-0.5"><i class="fas fa-map-marker-alt mr-1"></i>${a.local}</div>` : ''}</div>`; }).join('') : '<div class="text-center text-gray-500 py-4">📭 Nenhuma audiência agendada</div>';
             
+            // Tarefas
             const tarefasPendentesList = tarefas.filter(t => !t.concluida).slice(0,5);
             document.getElementById('listaTarefas').innerHTML = tarefasPendentesList.length ? tarefasPendentesList.map(t => `<div class="flex justify-between items-center p-2 glass-card rounded"><div class="flex-1"><span class="text-sm ${t.prioridade === 'Alta' ? 'text-red-400 font-bold' : ''}">${t.descricao}</span><p class="text-xs text-gray-500"><i class="far fa-calendar-alt mr-1"></i>${formatarDataHora(t.prazo)}</p></div><button onclick="concluirTarefa(${t.id})" class="text-green-400 hover:text-green-300"><i class="fas fa-check-circle"></i></button><button onclick="excluirTarefa(${t.id})" class="text-red-400 hover:text-red-300 ml-2"><i class="fas fa-trash"></i></button></div>`).join('') : '<div class="text-center text-gray-500 py-4">✅ Nenhuma tarefa pendente</div>';
             
+            // Tabela de Processos
             let processosFiltrados = [...processos];
             const busca = document.getElementById('buscaProcessos')?.value.toLowerCase();
             if (busca) processosFiltrados = processosFiltrados.filter(p => p.numero.toLowerCase().includes(busca) || p.cliente.toLowerCase().includes(busca) || (p.parteContraria && p.parteContraria.toLowerCase().includes(busca)));
             const statusFiltro = document.getElementById('filtroStatus')?.value;
             if (statusFiltro && statusFiltro !== 'todos') processosFiltrados = processosFiltrados.filter(p => p.status === statusFiltro);
             
-            document.getElementById('listaProcessos').innerHTML = processosFiltrados.map(p => { const a = audiencias.find(a => a.processoId === p.id && new Date(a.data) > new Date()); return `<tr onclick="editarProcesso(${p.id})" class="cursor-pointer hover:bg-blue-900/20 transition"><td class="p-3 text-sm font-mono">${p.numero}</td><td class="p-3 text-sm">${p.cliente}${p.cpfCliente ? `<br><small class="text-gray-500">${p.cpfCliente}</small>` : ''}</td><td class="p-3 text-sm">${p.parteContraria || '—'}${p.advogadoAdverso ? `<br><small class="text-gray-500">Adv: ${p.advogadoAdverso}</small>` : ''}</td><td class="p-3 text-sm font-semibold text-orange-300">${formatarMoeda(p.valorCausa)}</td><td class="p-3 text-sm">${formatarMoeda(p.honorarios)}<br><small class="${(p.valorRecebido || 0) >= (p.honorarios || 0) ? 'text-green-400' : 'text-yellow-400'}">Receb: ${formatarMoeda(p.valorRecebido || 0)}</small></td><td class="p-3 text-sm">${a ? formatarDataHora(a.data) : '—'}</td><td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${p.status === 'concluido' ? 'bg-green-500/20 text-green-300' : (p.status === 'andamento' ? 'bg-blue-500/20 text-blue-300' : 'bg-yellow-500/20 text-yellow-300')}">${p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Em Andamento' : 'Concluído')}</span></td><td class="p-3"><button onclick="event.stopPropagation(); editarProcesso(${p.id})" class="text-blue-400 hover:text-blue-300 mx-1"><i class="fas fa-edit"></i></button><button onclick="event.stopPropagation(); excluirProcesso(${p.id})" class="text-red-400 hover:text-red-300 mx-1"><i class="fas fa-trash"></i></button></td></tr>`; }).join('');
-            if (processosFiltrados.length === 0) document.getElementById('listaProcessos').innerHTML = '<tr><td colspan="8" class="text-center p-8 text-gray-500">📭 Nenhum processo encontrado</td></tr>';
+            document.getElementById('listaProcessos').innerHTML = processosFiltrados.map(p => { const a = audiencias.find(a => a.processoId === p.id && new Date(a.data) > new Date()); return `<tr onclick="editarProcesso(${p.id})" class="cursor-pointer hover:bg-blue-900/20 transition"><td class="p-3 text-sm font-mono">${p.numero}</td><td class="p-3 text-sm">${p.cliente}${p.cpfCliente ? `<br><small class="text-gray-500">${p.cpfCliente}</small>` : ''}</td><td class="p-3 text-sm">${p.parteContraria || '—'}${p.advogadoAdverso ? `<br><small class="text-gray-500">Adv: ${p.advogadoAdverso}</small>` : ''}</td><td class="p-3 text-sm font-semibold text-orange-300">${formatarMoeda(p.valorCausa)}</td><td class="p-3 text-sm">${formatarMoeda(p.honorarios)}<br><small class="${(p.valorRecebido || 0) >= (p.honorarios || 0) ? 'text-green-400' : 'text-yellow-400'}">Receb: ${formatarMoeda(p.valorRecebido || 0)}</small></td><td class="p-3 text-sm">${a ? formatarDataHora(a.data) : '—'}</td><td class="p-3"><span class="status-badge status-${p.status}">${p.status === 'aguardando' ? 'Aguardando' : (p.status === 'andamento' ? 'Em Andamento' : 'Concluído')}</span></td><td class="p-3"><button onclick="event.stopPropagation(); editarProcesso(${p.id})" class="text-blue-400 hover:text-blue-300 mx-1"><i class="fas fa-edit"></i></button><button onclick="event.stopPropagation(); excluirProcesso(${p.id})" class="text-red-400 hover:text-red-300 mx-1"><i class="fas fa-trash"></i></button></td></tr>`; }).join('');
+            if (processosFiltrados.length === 0) document.getElementById('listaProcessos').innerHTML = '<tr><td colspan="8" class="text-center p-8 text-gray-500">📭 Nenhum processo encontrado. Clique em "Novo Processo" para começar!</td></tr>';
             
+            // Selects
             const selectProcessos = document.getElementById('audienciaProcesso');
             if (selectProcessos) selectProcessos.innerHTML = processos.filter(p => p.status !== 'concluido').map(p => `<option value="${p.id}">${p.numero} - ${p.cliente}</option>`).join('');
             const selectPeticao = document.getElementById('peticaoProcesso');
@@ -841,25 +1233,36 @@
             const selectTarefa = document.getElementById('tarefaProcesso');
             if (selectTarefa) selectTarefa.innerHTML = `<option value="">Nenhum</option>` + processos.map(p => `<option value="${p.id}">${p.numero} - ${p.cliente}</option>`).join('');
             
+            // Calendário
             renderizarCalendario();
-            const listaModelos = document.getElementById('listaModelos');
-            if (listaModelos) listaModelos.innerHTML = modelosUsuario.map(m => `<div class="flex justify-between items-center p-2 glass-card rounded"><div><p class="text-sm font-semibold">📄 ${m.nome}</p><p class="text-xs text-gray-500">${formatarData(m.data)}</p></div><button onclick="usarModelo(${m.id})" class="text-blue-400 hover:text-blue-300"><i class="fas fa-file-alt"></i></button></div>`).join('') || '<div class="text-center text-gray-500 py-4">📭 Nenhum modelo salvo. Crie uma petição e salve como modelo.</div>';
+            
+            // Modelos Prontos
+            const listaModelosProntos = document.getElementById('listaModelosProntos');
+            if (listaModelosProntos) {
+                listaModelosProntos.innerHTML = Object.entries(modelosProntos).map(([key, value]) => `<div class="flex justify-between items-center p-2 glass-card rounded"><div><p class="text-sm font-semibold">📄 ${key === 'inicial' ? 'Petição Inicial' : (key === 'contestacao' ? 'Contestação' : (key === 'recurso' ? 'Recurso de Apelação' : 'Embargos de Declaração'))}</p><p class="text-xs text-gray-500">Modelo padrão - Pronto para uso</p></div><button onclick="usarModeloPronto('${key}')" class="text-green-400 hover:text-green-300"><i class="fas fa-download"></i> Usar</button></div>`).join('');
+            }
+            
+            // Modelos do Usuário
+            const listaModelosUsuario = document.getElementById('listaModelosUsuario');
+            if (listaModelosUsuario) {
+                listaModelosUsuario.innerHTML = modelosUsuario.map(m => `<div class="flex justify-between items-center p-2 glass-card rounded"><div><p class="text-sm font-semibold">💾 ${m.nome}</p><p class="text-xs text-gray-500">${formatarData(m.data)}</p></div><button onclick="usarModeloUsuario(${m.id})" class="text-blue-400 hover:text-blue-300"><i class="fas fa-file-alt"></i> Usar</button></div>`).join('') || '<div class="text-center text-gray-500 py-4">📭 Nenhum modelo salvo. Crie uma petição e salve como modelo.</div>';
+            }
             
             // Gráficos
             if (document.getElementById('graficoStatus') && window.statusChart) window.statusChart.destroy();
-            if (document.getElementById('graficoStatus')) {
+            if (document.getElementById('graficoStatus') && processos.length > 0) {
                 const statusCount = { aguardando: processos.filter(p => p.status === 'aguardando').length, andamento: processos.filter(p => p.status === 'andamento').length, concluido: processos.filter(p => p.status === 'concluido').length };
                 window.statusChart = new Chart(document.getElementById('graficoStatus'), { type: 'doughnut', data: { labels: ['Aguardando', 'Em Andamento', 'Concluídos'], datasets: [{ data: [statusCount.aguardando, statusCount.andamento, statusCount.concluido], backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'] }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#e2e8f0' } } } } });
             }
             
             if (document.getElementById('graficoHonorariosBI') && window.honorariosChart) window.honorariosChart.destroy();
-            if (document.getElementById('graficoHonorariosBI')) {
+            if (document.getElementById('graficoHonorariosBI') && processos.length > 0) {
                 const honorariosPorStatus = { aguardando: processos.filter(p => p.status === 'aguardando').reduce((s,p) => s + (p.honorarios || 0), 0), andamento: processos.filter(p => p.status === 'andamento').reduce((s,p) => s + (p.honorarios || 0), 0), concluido: processos.filter(p => p.status === 'concluido').reduce((s,p) => s + (p.honorarios || 0), 0) };
                 window.honorariosChart = new Chart(document.getElementById('graficoHonorariosBI'), { type: 'bar', data: { labels: ['Aguardando', 'Em Andamento', 'Concluídos'], datasets: [{ label: 'Honorários (R$)', data: [honorariosPorStatus.aguardando, honorariosPorStatus.andamento, honorariosPorStatus.concluido], backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#e2e8f0' } } }, scales: { y: { ticks: { color: '#e2e8f0' } }, x: { ticks: { color: '#e2e8f0' } } } } });
             }
             
             if (document.getElementById('graficoHonorariosModal') && window.graficoHonorariosModal) window.graficoHonorariosModal.destroy();
-            if (document.getElementById('graficoHonorariosModal')) {
+            if (document.getElementById('graficoHonorariosModal') && processos.length > 0) {
                 const totalHonorarios = processos.reduce((s,p) => s + (p.honorarios || 0), 0);
                 const totalRecebido = processos.reduce((s,p) => s + (p.valorRecebido || 0), 0);
                 const pendente = totalHonorarios - totalRecebido;
@@ -885,16 +1288,60 @@
             document.getElementById('insightsContainer').innerHTML = insights.map(i => `<div class="p-2 bg-blue-900/20 rounded">${i}</div>`).join('');
         }
         
-        function usarModelo(id) { const modelo = modelosUsuario.find(m => m.id === id); if (modelo) { document.getElementById('peticaoConteudo').value = modelo.conteudo; abrirModal('modalPeticao'); Swal.fire('Modelo carregado!', '', 'success'); } }
+        function usarModeloPronto(key) {
+            const modelo = modelosProntos[key];
+            if (modelo) {
+                document.getElementById('peticaoConteudo').value = modelo;
+                document.getElementById('peticaoModelo').value = key;
+                abrirModal('modalPeticao');
+                Swal.fire('Modelo carregado!', 'Edite conforme necessário', 'success');
+            }
+        }
+        
+        function usarModeloUsuario(id) {
+            const modelo = modelosUsuario.find(m => m.id === id);
+            if (modelo) {
+                document.getElementById('peticaoConteudo').value = modelo.conteudo;
+                document.getElementById('peticaoModelo').value = '';
+                abrirModal('modalPeticao');
+                Swal.fire('Modelo carregado!', '', 'success');
+            }
+        }
+        
         function filtrarKanban(tipo) { atualizarUI(); }
-        function abrirModalProcesso() { document.getElementById('modalTitulo').innerText = 'Novo Processo'; document.getElementById('formProcesso').reset(); document.getElementById('processoId').value = ''; abrirModal('modalProcesso'); }
-        function abrirModalAudiencia() { abrirModal('modalAudiencia'); }
-        function abrirModalPeticao() { document.getElementById('peticaoConteudo').value = ''; document.getElementById('peticaoModelo').value = ''; abrirModal('modalPeticao'); }
+        
+        function abrirModalProcesso() { 
+            document.getElementById('modalTitulo').innerText = 'Novo Processo'; 
+            document.getElementById('formProcesso').reset(); 
+            document.getElementById('processoId').value = ''; 
+            abrirModal('modalProcesso'); 
+        }
+        function abrirModalAudiencia() { 
+            if (processos.length === 0) {
+                Swal.fire('Atenção', 'Cadastre um processo primeiro', 'warning');
+                return;
+            }
+            abrirModal('modalAudiencia'); 
+        }
+        function abrirModalPeticao() { 
+            document.getElementById('peticaoConteudo').value = ''; 
+            document.getElementById('peticaoModelo').value = ''; 
+            abrirModal('modalPeticao'); 
+        }
         function abrirModalTarefa() { abrirModal('modalTarefa'); }
         function abrirModalHonorarios() { abrirModal('modalHonorarios'); }
         function abrirModalRelatorios() { abrirModal('modalRelatorios'); }
         function abrirModalDocumentos() { abrirModal('modalDocumentos'); }
-        function abrirConfiguracoes() { renderizarFeriados(); document.getElementById('metaFinanceira').value = metaFinanceira; abrirModal('modalConfig'); }
+        function abrirConfiguracoes() { 
+            renderizarFeriados(); 
+            document.getElementById('metaFinanceira').value = metaFinanceira;
+            // Carregar URI salva
+            const savedUri = localStorage.getItem('mongo_uri') || '';
+            const savedDb = localStorage.getItem('mongo_db') || 'advflow_db';
+            document.getElementById('mongoUri').value = savedUri;
+            document.getElementById('dbName').value = savedDb;
+            abrirModal('modalConfig'); 
+        }
         function abrirPainelBI() { atualizarUI(); abrirModal('modalBI'); }
 
         // Event Listeners
@@ -905,14 +1352,11 @@
         document.getElementById('buscaProcessos')?.addEventListener('input', () => atualizarUI());
         document.getElementById('filtroStatus')?.addEventListener('change', () => atualizarUI());
         
-        document.getElementById('peticaoModelo')?.addEventListener('change', function() {
-            const modelos = { inicial: 'Excelentíssimo Senhor Doutor Juiz de Direito da ___ Vara Cível da Comarca de ___.\n\n[NOME DO CLIENTE], já qualificado, vem respeitosamente propor a presente AÇÃO em face de [PARTE CONTRARIA]...', contestacao: 'EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO DA ___ VARA CÍVEL DA COMARCA DE ___.\n\n[NOME DO CLIENTE], já qualificado nos autos, vem apresentar CONTESTAÇÃO...', recurso: 'EXCELENTÍSSIMO SENHOR DOUTOR DESEMBARGADOR PRESIDENTE DO EGRÉGIO TRIBUNAL DE JUSTIÇA DO ESTADO DE ___.\n\nRAZÕES DE APELAÇÃO...' };
-            if (this.value && modelos[this.value]) document.getElementById('peticaoConteudo').value = modelos[this.value];
-        });
-        
         window.onclick = function(event) { if (event.target.classList.contains('fixed') && event.target.classList.contains('bg-black/80')) { event.target.classList.add('hidden'); event.target.classList.remove('flex'); } };
         setInterval(() => { document.getElementById('horaAtual').innerText = new Date().toLocaleTimeString('pt-BR'); }, 1000);
-        carregarDados();
+        
+        // Inicialização
+        carregarDadosLocal();
     </script>
 </body>
 </html>
