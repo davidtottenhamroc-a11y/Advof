@@ -1,15 +1,12 @@
 {
   "name": "advflow-pro",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Sistema Jurídico para Advogados",
+  "type": "module",
   "scripts": {
-    "dev": "vercel dev",
-    "deploy": "vercel --prod"
+    "vercel-build": "echo Build completed"
   },
   "dependencies": {
-    "mongodb": "^6.5.0"
-  },
-  "devDependencies": {
-    "vercel": "^33.5.0"
+    "mongodb": "^5.9.0"
   }
 }
